@@ -1,0 +1,19 @@
+2025-11-17T16:43:17: PM2 log: ===============================================================================
+2025-11-17T16:43:17: PM2 log: --- New PM2 Daemon started ----------------------------------------------------
+2025-11-17T16:43:17: PM2 log: Time                 : Mon Nov 17 2025 16:43:17 GMT+0000 (Coordinated Universal Time)
+2025-11-17T16:43:17: PM2 log: PM2 version          : 6.0.13
+2025-11-17T16:43:17: PM2 log: Node.js version      : 20.19.5
+2025-11-17T16:43:17: PM2 log: Current arch         : arm64
+2025-11-17T16:43:17: PM2 log: PM2 home             : /Users/abi/workspaces/hustle/support-portal/storage/.pm2
+2025-11-17T16:43:17: PM2 log: PM2 PID file         : /Users/abi/workspaces/hustle/support-portal/storage/.pm2/pm2.pid
+2025-11-17T16:43:17: PM2 log: RPC socket file      : /Users/abi/workspaces/hustle/support-portal/storage/.pm2/rpc.sock
+2025-11-17T16:43:17: PM2 log: BUS socket file      : /Users/abi/workspaces/hustle/support-portal/storage/.pm2/pub.sock
+2025-11-17T16:43:17: PM2 log: Application log path : /Users/abi/workspaces/hustle/support-portal/storage/.pm2/logs
+2025-11-17T16:43:17: PM2 log: Worker Interval      : 30000
+2025-11-17T16:43:17: PM2 log: Process dump file    : /Users/abi/workspaces/hustle/support-portal/storage/.pm2/dump.pm2
+2025-11-17T16:43:17: PM2 log: Concurrent actions   : 2
+2025-11-17T16:43:17: PM2 log: SIGTERM timeout      : 1600
+2025-11-17T16:43:17: PM2 log: Runtime Binary       : /Users/abi/.nvm/versions/node/v20.19.5/bin/node
+2025-11-17T16:43:17: PM2 log: ===============================================================================
+2025-11-17T19:58:06: PM2 log: pm2 has been killed by signal, dumping process list before exit...
+2025-11-17T19:58:06: PM2 log: Exited peacefully

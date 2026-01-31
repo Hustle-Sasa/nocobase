@@ -1,0 +1,31 @@
+{
+  "extends": "./tsconfig.paths.json",
+  "compilerOptions": {
+    "esModuleInterop": true,
+    "moduleResolution": "node",
+    "jsx": "react",
+    "target": "esnext",
+    "module": "esnext",
+    "allowJs": true,
+    "noUnusedLocals": false,
+    "preserveConstEnums": true,
+    "skipLibCheck": true,
+    "sourceMap": true,
+    "inlineSources": true,
+    "resolveJsonModule": true,
+    "declaration": true,
+    "experimentalDecorators": true,
+    "downlevelIteration": true,
+    "baseUrl": "."
+  },
+  "exclude": [
+    "node_modules",
+    "**/dist/**",
+    "packages/**/dist/**",
+    "packages/**/client.d.ts",
+    "packages/**/client.js",
+    "packages/**/server.d.ts",
+    "packages/**/server.js",
+    "storage/**"
+  ]
+}

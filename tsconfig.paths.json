@@ -1,0 +1,45 @@
+{
+  "compilerOptions": {
+    "paths": {
+      "@@/*": [
+        ".dumi/tmp/*"
+      ],
+      "@hustlesasa/plugin-authentication/client": [
+        "packages/plugins/@hustlesasa/plugin-authentication/src/client"
+      ],
+      "@hustlesasa/plugin-authentication/package.json": [
+        "packages/plugins/@hustlesasa/plugin-authentication/package.json"
+      ],
+      "@hustlesasa/plugin-authentication": [
+        "packages/plugins/@hustlesasa/plugin-authentication/src"
+      ],
+      "@hustlesasa/plugin-finance/client": [
+        "packages/plugins/@hustlesasa/plugin-finance/src/client"
+      ],
+      "@hustlesasa/plugin-finance/package.json": [
+        "packages/plugins/@hustlesasa/plugin-finance/package.json"
+      ],
+      "@hustlesasa/plugin-finance": [
+        "packages/plugins/@hustlesasa/plugin-finance/src"
+      ],
+      "@hustlesasa/plugin-operations/client": [
+        "packages/plugins/@hustlesasa/plugin-operations/src/client"
+      ],
+      "@hustlesasa/plugin-operations/package.json": [
+        "packages/plugins/@hustlesasa/plugin-operations/package.json"
+      ],
+      "@hustlesasa/plugin-operations": [
+        "packages/plugins/@hustlesasa/plugin-operations/src"
+      ],
+      "@hustlesasa/plugin-support/client": [
+        "packages/plugins/@hustlesasa/plugin-support/src/client"
+      ],
+      "@hustlesasa/plugin-support/package.json": [
+        "packages/plugins/@hustlesasa/plugin-support/package.json"
+      ],
+      "@hustlesasa/plugin-support": [
+        "packages/plugins/@hustlesasa/plugin-support/src"
+      ]
+    }
+  }
+}

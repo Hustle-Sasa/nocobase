@@ -1,0 +1,15 @@
+{
+    "keep": {
+        "days": true,
+        "amount": 14
+    },
+    "auditLog": "/Users/abi/workspaces/hustle/support-portal/storage/logs/main/custom-request/.3584272cc77b93481f4ac1b950661f1e045a2adb-audit.json",
+    "files": [
+        {
+            "date": 1769865358210,
+            "name": "/Users/abi/workspaces/hustle/support-portal/storage/logs/main/custom-request/2026-01-31.log",
+            "hash": "000341285caf13f1b7ca3556c4a1b65d53114ea722ecc6e1c65e2c5fd2591cc0"
+        }
+    ],
+    "hashType": "sha256"
+}
