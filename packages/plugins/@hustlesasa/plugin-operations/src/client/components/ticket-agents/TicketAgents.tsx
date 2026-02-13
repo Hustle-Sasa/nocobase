@@ -29,7 +29,7 @@ export const TicketAgents = withDynamicSchemaProps(
 
     // Add after existing state declarations
     const [pagination, setPagination] = useState({
-      current: 1,
+      current: null,
       pageSize: 30,
       total: 0,
     });
@@ -148,6 +148,15 @@ export const TicketAgents = withDynamicSchemaProps(
      * methods
      */
 
+    // Update handleTableChange
+    const handleTableChange = (p: number) => {
+      setPagination((prev) => ({
+        ...prev,
+        current: p,
+        pageSize: pagination.pageSize,
+      }));
+    };
+
     const deleteAgent = async (id: number) => {
       try {
         await api.request({
@@ -177,6 +186,17 @@ export const TicketAgents = withDynamicSchemaProps(
           loading={loading}
           size="large"
           scroll={{ x: 800 }}
+          pagination={{
+            current: pagination.current,
+            pageSize: pagination.pageSize,
+            total: pagination.total,
+            showSizeChanger: false,
+            showPrevNextJumpers: true,
+            showQuickJumper: false,
+            showTotal: (total, range) => `${range[0]}-${range[1]} of ${total} items`,
+            pageSizeOptions: ['10', '20', '50', '100'],
+            onChange: handleTableChange,
+          }}
         />
 
         {selectedItem && (

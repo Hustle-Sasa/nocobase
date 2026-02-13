@@ -2,22 +2,24 @@ import React, { useState } from 'react';
 import { useRequest } from '@nocobase/client';
 import { Button, Input, Spin, Table, TableColumnsType, Tag } from 'antd';
 import { ReloadOutlined, SearchOutlined } from '@ant-design/icons';
+import { format } from 'date-fns';
 
 import { Buyer, Order } from './type';
 import { formatMoney } from '../../../lib';
-import { format } from 'date-fns';
+import { MOIBookingDetails } from './MOIBookingDetails';
 
 export const MoiBookings = () => {
   /**
    * state
    */
   const [searchText, setSearchText] = useState('');
-  // Add after existing state declarations
   const [pagination, setPagination] = useState({
     current: 1,
     pageSize: 30,
     total: 0,
   });
+  const [drawerOpen, setDrawerOpen] = useState(false);
+  const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
 
   /**
    * api
@@ -48,8 +50,6 @@ export const MoiBookings = () => {
       },
     },
   );
-
-
 
   /**
    * variables
@@ -198,6 +198,13 @@ export const MoiBookings = () => {
         dataSource={users}
         rowKey="order_id"
         loading={loading}
+        onRow={(record) => ({
+          onClick: () => {
+            setSelectedOrder(record);
+            setDrawerOpen(true);
+          },
+          style: { cursor: 'pointer' },
+        })}
         pagination={{
           current: pagination.current,
           pageSize: pagination.pageSize,
@@ -209,6 +216,13 @@ export const MoiBookings = () => {
           showTotal: (total, range) => `${range[0]}-${range[1]} of ${total} items`,
           onChange: handleTableChange,
         }}
+      />
+
+      <MOIBookingDetails
+        open={drawerOpen}
+        order={selectedOrder}
+        onClose={() => setDrawerOpen(false)}
+        onRescheduleSuccess={refresh}
       />
     </div>
   );

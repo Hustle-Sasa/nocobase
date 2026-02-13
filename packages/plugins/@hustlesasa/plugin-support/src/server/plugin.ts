@@ -13,6 +13,7 @@ export class PluginSupportServer extends Plugin {
     const config = {
       coreApiUrl: process.env.EXTERNAL_CORE_API_URL,
       servicesApiUrl: process.env.EXTERNAL_SERVICES_API_URL,
+      baseDomain: process.env.EXTERNAL_HUSTLESASA_BASE_DOMAIN,
     };
 
     // for users
@@ -102,8 +103,8 @@ export class PluginSupportServer extends Plugin {
                 meta: {
                   count: 0,
                   total: 0,
-                  page: parseInt(page),
-                  pageSize: parseInt(limit),
+                  page: Number.parseInt(page),
+                  pageSize: Number.parseInt(limit),
                   totalPages: 0,
                 },
               };
@@ -129,8 +130,8 @@ export class PluginSupportServer extends Plugin {
                 meta: {
                   count: res.data.length,
                   total: meta?.total_items,
-                  page: parseInt(page),
-                  pageSize: parseInt(limit),
+                  page: Number.parseInt(page),
+                  pageSize: Number.parseInt(limit),
                   totalPages: Math.ceil(meta?.total_items / limit),
                 },
               };
@@ -163,6 +164,7 @@ export class PluginSupportServer extends Plugin {
 
             ctx.body = { data: res.data };
           } catch (error: any) {
+            console.error('Error resending order:', error);
             ctx.throw(404, 'Not found');
           }
           await next();
@@ -194,8 +196,8 @@ export class PluginSupportServer extends Plugin {
                 meta: {
                   count: 0,
                   total: 0,
-                  page: parseInt(String(page)),
-                  pageSize: parseInt(String(pageSize)),
+                  page: Number.parseInt(String(page)),
+                  pageSize: Number.parseInt(String(pageSize)),
                   totalPages: 0,
                 },
               };
@@ -204,6 +206,7 @@ export class PluginSupportServer extends Plugin {
 
             ctx.body = { data: res.data };
           } catch (error: any) {
+            console.error('Error listing payments', error);
             ctx.throw(404, 'Not found');
           }
 
@@ -229,6 +232,7 @@ export class PluginSupportServer extends Plugin {
 
             ctx.body = { data: res.data };
           } catch (error: any) {
+            console.error('Error resending order:', error);
             ctx.throw(404, 'Not found');
           }
           await next();
@@ -253,6 +257,7 @@ export class PluginSupportServer extends Plugin {
 
             ctx.body = { data: res.data };
           } catch (error: any) {
+            console.error('Error regenerating order:', error);
             ctx.throw(404, 'Not found');
           }
           await next();
@@ -415,8 +420,9 @@ export class PluginSupportServer extends Plugin {
 
           try {
             // Fetch from external API
+            const searchParam = search ? `&search=${search}` : '';
             const response = await fetch(
-              `${config.coreApiUrl}/getAllHustles?page=${page}&limit=${limit}${search ? `&search=${search}` : ''}`,
+              `${config.coreApiUrl}/getAllHustles?page=${page}&limit=${limit}${searchParam}`,
               {
                 headers: {
                   Authorization: `Basic ${credentials}`,
@@ -448,8 +454,8 @@ export class PluginSupportServer extends Plugin {
               meta: {
                 count: res.total,
                 total: res.total,
-                page: parseInt(page),
-                pageSize: parseInt(limit),
+                page: Number.parseInt(page),
+                pageSize: Number.parseInt(limit),
                 totalPages: Math.ceil(res.total / limit),
               },
             };
@@ -519,8 +525,8 @@ export class PluginSupportServer extends Plugin {
                 meta: {
                   count: 0,
                   total: 0,
-                  page: parseInt(page),
-                  pageSize: parseInt(limit),
+                  page: Number.parseInt(page),
+                  pageSize: Number.parseInt(limit),
                   totalPages: 0,
                 },
               };
@@ -534,8 +540,8 @@ export class PluginSupportServer extends Plugin {
               meta: {
                 count: res.data.length,
                 total: meta?.total_items,
-                page: parseInt(page),
-                pageSize: parseInt(limit),
+                page: Number.parseInt(page),
+                pageSize: Number.parseInt(limit),
                 totalPages: Math.ceil(meta?.total_items / limit),
               },
             };
@@ -744,12 +750,51 @@ export class PluginSupportServer extends Plugin {
                 count: res.total,
                 total: res.total,
                 page,
-                pageSize: parseInt(limit),
+                pageSize: Number.parseInt(limit),
                 totalPages: Math.ceil(res.total / limit),
               },
             };
           } catch (error: any) {
             ctx.throw(404, 'Bookings Not found');
+          }
+          await next();
+        },
+
+        reschedule: async (ctx, next) => {
+          const { variantId, date, time } = ctx.action.params;
+
+          if (!variantId) {
+            ctx.throw(400, 'Variant ID is required');
+          }
+
+          if (!date || !time) {
+            ctx.throw(400, 'Date and time are required');
+          }
+
+          try {
+            const response = await fetch(`${config.coreApiUrl}/booking/reschedule`, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                Authorization: `Basic ${credentials}`,
+              },
+              body: JSON.stringify({ vault_id: variantId, new_date: date, new_time: time }),
+            });
+
+            const res = await response.json();
+
+            if (!response.ok) {
+              ctx.throw(response.status, res.message || 'Failed to reschedule booking');
+            }
+
+            ctx.body = {
+              success: true,
+              data: res,
+            };
+          } catch (error: any) {
+            console.log(error);
+
+            ctx.throw(500, error.message || 'Failed to reschedule booking');
           }
           await next();
         },

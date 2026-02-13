@@ -9,6 +9,21 @@
             "date": 1769865358203,
             "name": "/Users/abi/workspaces/hustle/support-portal/storage/logs/main/notification-manager/2026-01-31.log",
             "hash": "62099ebb40625252ff0d9776fff034b054dbbf2b870195c028f39ea4700baa3e"
+        },
+        {
+            "date": 1769932740930,
+            "name": "/Users/abi/workspaces/hustle/support-portal/storage/logs/main/notification-manager/2026-02-01.log",
+            "hash": "40a7250097f697f09d525515611828c2df599d72a2e0bf9cc8e82edb36cf4287"
+        },
+        {
+            "date": 1770368020490,
+            "name": "/Users/abi/workspaces/hustle/support-portal/storage/logs/main/notification-manager/2026-02-06.log",
+            "hash": "06db13a9d2ab292c12296042079bce5d08f537219d3c640d12f9874434832e80"
+        },
+        {
+            "date": 1770721791145,
+            "name": "/Users/abi/workspaces/hustle/support-portal/storage/logs/main/notification-manager/2026-02-10.log",
+            "hash": "014c4f6418c11dc049befb4603dfdb4bf13a54374e10f0cca75d22e40166d000"
         }
     ],
     "hashType": "sha256"
