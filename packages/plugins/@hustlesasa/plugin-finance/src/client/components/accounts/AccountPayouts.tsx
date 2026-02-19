@@ -72,7 +72,7 @@ function AccountPayouts({ hustle }: { hustle: any }) {
       title: 'Amount',
       dataIndex: 'amount',
       key: 'amount',
-      width: 100,
+      width: 150,
       render: (_, record: Transaction) => <>{formatMoney(record.amount, hustle?.country?.currencyCode)}</>,
     },
     {

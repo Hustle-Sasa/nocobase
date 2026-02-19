@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
+import { useLocation, useSearchParams } from 'react-router-dom';
 import { useRequest, withDynamicSchemaProps } from '@nocobase/client';
-import { Button, Card, Empty, Form, Input, Skeleton, Typography } from 'antd';
+import { Card, Empty, Form, Input, Skeleton, Typography } from 'antd';
 
 import { BlockName } from './constant';
 import Account from './Account';
@@ -20,15 +21,26 @@ export const AccountManager = withDynamicSchemaProps(
     /***
      * state
      */
-    const [searchText, setSearchText] = useState('');
+    const location = useLocation();
+    const [, setSearchParams] = useSearchParams();
+    const [searchText, setSearchText] = useState(
+      () => new URLSearchParams(globalThis.location.search).get('hustleId') ?? '',
+    );
     const [hustleDetail, setHustleDetail] = useState<DataItem | null>(null);
 
     /**
-     *
+     * effects
      */
+    useEffect(() => {
+      const hustleId = new URLSearchParams(location.search).get('hustleId') ?? '';
+      setSearchText(hustleId);
+    }, [location.search]);
 
-    // Fetch account details when searchText is provided
-    const { data: response, loading } = useRequest<{ data: any }>(
+    /***
+     * methods
+     */
+    // Fetch account details when searchText is provided — automatically
+    const { loading } = useRequest<{ data: any }>(
       searchText
         ? {
             url: 'finance:get',
@@ -43,45 +55,30 @@ export const AccountManager = withDynamicSchemaProps(
         onSuccess: (res) => {
           setHustleDetail(res?.data?.data);
         },
+        onError: () => {
+          setHustleDetail(null);
+        },
       },
     );
 
-    /**
-     * variables
-     */
-    const hustle = response?.data?.['data'] || {};
-
-    const onFinish = (values: { search: string }) => setSearchText(values.search);
+    const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+      const value = e.target.value;
+      if (value) {
+        setSearchText(value);
+        setSearchParams({ hustleId: value }, { replace: true });
+      } else {
+        setSearchParams({}, { replace: true });
+        setSearchText('');
+        setHustleDetail(null);
+      }
+    };
 
     return (
       <div style={{ padding: 24 }}>
         <Card title="Search hustle" style={{ padding: '24px 0' }}>
-          <Form
-            name="basic"
-            layout="vertical"
-            style={{ maxWidth: 600 }}
-            initialValues={{ remember: true }}
-            onFinish={onFinish}
-            autoComplete="off"
-          >
-            <Form.Item
-              label="Hustle ID"
-              name="search"
-              rules={[{ required: true, message: 'Please input the Hustle ID!' }]}
-            >
-              <Input.Search
-                allowClear
-                value={searchText}
-                onSearch={() => {
-                  onFinish({ search: searchText });
-                }}
-              />
-            </Form.Item>
-
-            <Form.Item label={null}>
-              <Button type="primary" htmlType="submit" loading={loading}>
-                Submit
-              </Button>
+          <Form layout="vertical" style={{ maxWidth: 600 }} autoComplete="off">
+            <Form.Item label="Hustle ID">
+              <Input.Search allowClear value={searchText} onChange={handleChange} />
             </Form.Item>
           </Form>
         </Card>
@@ -89,7 +86,7 @@ export const AccountManager = withDynamicSchemaProps(
         <div style={{ padding: '48px 0' }}>
           {loading && <Skeleton active paragraph={{ rows: 6 }} />}
 
-          {!loading && !hustle && (
+          {!loading && !hustleDetail && (
             <Empty
               description={
                 <Typography.Text>Shop information will be displayed here once you enter a shop ID</Typography.Text>
@@ -97,7 +94,7 @@ export const AccountManager = withDynamicSchemaProps(
             />
           )}
 
-          {hustle && Object.keys(hustle).length > 0 && <Account hustle={hustleDetail} />}
+          {hustleDetail && <Account hustle={hustleDetail} />}
         </div>
       </div>
     );

@@ -6,16 +6,6 @@
     "auditLog": "/Users/abi/workspaces/hustle/support-portal/storage/logs/main/notification-manager/.aae861ce29f1f24a7d0a26403bc2592ee7398785-audit.json",
     "files": [
         {
-            "date": 1769865358203,
-            "name": "/Users/abi/workspaces/hustle/support-portal/storage/logs/main/notification-manager/2026-01-31.log",
-            "hash": "62099ebb40625252ff0d9776fff034b054dbbf2b870195c028f39ea4700baa3e"
-        },
-        {
-            "date": 1769932740930,
-            "name": "/Users/abi/workspaces/hustle/support-portal/storage/logs/main/notification-manager/2026-02-01.log",
-            "hash": "40a7250097f697f09d525515611828c2df599d72a2e0bf9cc8e82edb36cf4287"
-        },
-        {
             "date": 1770368020490,
             "name": "/Users/abi/workspaces/hustle/support-portal/storage/logs/main/notification-manager/2026-02-06.log",
             "hash": "06db13a9d2ab292c12296042079bce5d08f537219d3c640d12f9874434832e80"
@@ -24,6 +14,16 @@
             "date": 1770721791145,
             "name": "/Users/abi/workspaces/hustle/support-portal/storage/logs/main/notification-manager/2026-02-10.log",
             "hash": "014c4f6418c11dc049befb4603dfdb4bf13a54374e10f0cca75d22e40166d000"
+        },
+        {
+            "date": 1771431778239,
+            "name": "/Users/abi/workspaces/hustle/support-portal/storage/logs/main/notification-manager/2026-02-18.log",
+            "hash": "9fd19b0c0f16f3c3ef6fb06f8f0bdad2144d7b51ca59bc24c351c8a339674217"
+        },
+        {
+            "date": 1771482642923,
+            "name": "/Users/abi/workspaces/hustle/support-portal/storage/logs/main/notification-manager/2026-02-19.log",
+            "hash": "6dcd4323c69e172035d74e2b81c4a5d93492d1c4df7eefc775d88aeabd8545a7"
         }
     ],
     "hashType": "sha256"

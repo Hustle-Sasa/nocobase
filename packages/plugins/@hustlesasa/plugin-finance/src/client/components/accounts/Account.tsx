@@ -1,6 +1,6 @@
 import React from 'react';
 import { useRequest } from '@nocobase/client';
-import { Card, Descriptions, DescriptionsProps, Flex, Table, TableColumnsType, Typography } from 'antd';
+import { Card, Descriptions, DescriptionsProps, Flex } from 'antd';
 
 import AccountOperations from './AccountOperations';
 import AccountPayouts from './AccountPayouts';
@@ -14,7 +14,7 @@ function Account({ hustle }: any) {
   /**
    * api
    */
-  const { data: response, loading } = useRequest<{ data?: Wallet }>(
+  const { data: response } = useRequest<{ data?: Wallet }>(
     hustle && hustle.account
       ? {
           url: `finance:getWallet`,
@@ -33,16 +33,21 @@ function Account({ hustle }: any) {
   const items: DescriptionsProps['items'] = [
     {
       key: '1',
+      label: 'Shop',
+      children: hustle?.title,
+    },
+    {
+      key: '2',
       label: 'Account',
       children: hustle?.account,
     },
     {
-      key: '2',
+      key: '3',
       label: 'Balance',
       children: wallet?.avl_balance,
     },
     {
-      key: '3',
+      key: '4',
       label: 'Country',
       children: hustle?.country?.name,
     },
