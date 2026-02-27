@@ -36,13 +36,15 @@
     "semver": "^7.7.1"
   },
   "dependencies": {
-    "pm2": "^6.0.5",
-    "mysql2": "^3.14.0",
+    "@dnd-kit/helpers": "^0.3.2",
+    "@dnd-kit/react": "^0.3.2",
+    "@nocobase/cli": "1.9.6",
+    "antd-mobile": "^5.34.0",
     "mariadb": "^2.5.6",
+    "mysql2": "^3.14.0",
     "pg": "^8.14.1",
     "pg-hstore": "^2.3.4",
-    "@nocobase/cli": "1.9.6",
-    "antd-mobile": "^5.34.0"
+    "pm2": "^6.0.5"
   },
   "devDependencies": {
     "@nocobase/devtools": "1.9.6"

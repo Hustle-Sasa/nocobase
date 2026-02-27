@@ -122,6 +122,112 @@ export class PluginOperationsServer extends Plugin {
           }
           await next();
         },
+
+        emRequestList: async (ctx, next) => {
+          const { page = 0, pageSize = 30, search = '', status } = ctx.action?.params || {};
+
+          try {
+            // Fetch from external API
+            const params = new URLSearchParams({
+              page: String(page),
+              limit: String(pageSize),
+            });
+            if (search) params.append('search', search);
+            if (status) params.append('status', status);
+
+            const response = await fetch(`${config.coreApiUrl}/marketplace/backoffice/product-approvals?${params}`, {
+              headers: {
+                Authorization: `Basic ${credentials}`,
+              },
+            });
+
+            const res = await response.json();
+
+            // Transform data with pagination
+
+            ctx.body = {
+              data: res?.data || [],
+              res,
+              meta: {
+                count: res?.meta?.total || 0,
+                total: res?.meta?.total || 0,
+                page,
+                pageSize,
+                totalPages: Math.ceil((res?.meta?.total || 0) / pageSize),
+              },
+            };
+          } catch (error: any) {
+            ctx.throw(500, error.message);
+          }
+
+          await next();
+        },
+        emRequestApprove: async (ctx, next) => {
+          const { request_id } = ctx.action?.params || {};
+
+          try {
+            const response = await fetch(
+              `${config.coreApiUrl}/marketplace/backoffice/product-approvals/${request_id}`,
+              {
+                method: 'POST',
+                body: JSON.stringify({ approved_to_marketplace: true }),
+                headers: {
+                  Authorization: `Basic ${credentials}`,
+                  'Content-Type': 'application/json',
+                  Accept: 'application/json',
+                },
+              },
+            );
+
+            const res = await response.json();
+
+            if (res.success === true) {
+              ctx.body = {
+                message: res.message,
+              };
+            } else {
+              console.log('Error', res);
+              ctx.throw(404, res?.message || 'Not found');
+            }
+          } catch (error: any) {
+            console.log('Error', error);
+            ctx.throw(404, error?.message);
+          }
+
+          await next();
+        },
+        emRequestReject: async (ctx, next) => {
+          const { request_id } = ctx.action?.params || {};
+
+          try {
+            const response = await fetch(
+              `${config.coreApiUrl}/marketplace/backoffice/product-approvals/${request_id}`,
+              {
+                method: 'POST',
+                body: JSON.stringify({ approved_to_marketplace: false }),
+                headers: {
+                  Authorization: `Basic ${credentials}`,
+                  'Content-Type': 'application/json',
+                  Accept: 'application/json',
+                },
+              },
+            );
+
+            const res = await response.json();
+
+            if (res.success === true) {
+              ctx.body = {
+                message: res.message,
+              };
+            } else {
+              ctx.throw(404, res?.message || 'Not found');
+            }
+          } catch (error: any) {
+            ctx.throw(404, error?.message);
+          }
+
+          await next();
+        },
       },
     });
 
