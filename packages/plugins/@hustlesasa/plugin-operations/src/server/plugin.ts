@@ -124,7 +124,7 @@ export class PluginOperationsServer extends Plugin {
         },
 
         emRequestList: async (ctx, next) => {
-          const { page = 0, pageSize = 30, search = '', status } = ctx.action?.params || {};
+          const { page = 0, pageSize = 30, search = '', status, country } = ctx.action?.params || {};
 
           try {
             // Fetch from external API
@@ -134,16 +134,18 @@ export class PluginOperationsServer extends Plugin {
             });
             if (search) params.append('search', search);
             if (status) params.append('status', status);
+            if (country) params.append('country', country);
 
-            const response = await fetch(`${config.coreApiUrl}/marketplace/backoffice/product-approvals?${params}`, {
-              headers: {
-                Authorization: `Basic ${credentials}`,
+            const response = await fetch(
+              `${config.coreApiUrl}/marketplace/backoffice/product-approvals?${params.toString()}`,
+              {
+                headers: {
+                  Authorization: `Basic ${credentials}`,
+                },
               },
-            });
+            );
 
             const res = await response.json();
-
-            // Transform data with pagination
 
             ctx.body = {
               data: res?.data || [],
@@ -169,7 +171,7 @@ export class PluginOperationsServer extends Plugin {
             const response = await fetch(
               `${config.coreApiUrl}/marketplace/backoffice/product-approvals/${request_id}`,
               {
-                method: 'POST',
+                method: 'PATCH',
                 body: JSON.stringify({ approved_to_marketplace: true }),
                 headers: {
                   Authorization: `Basic ${credentials}`,
@@ -186,11 +188,9 @@ export class PluginOperationsServer extends Plugin {
                 message: res.message,
               };
             } else {
-              console.log('Error', res);
               ctx.throw(404, res?.message || 'Not found');
             }
           } catch (error: any) {
-            console.log('Error', error);
             ctx.throw(404, error?.message);
           }
 
@@ -203,7 +203,7 @@ export class PluginOperationsServer extends Plugin {
             const response = await fetch(
               `${config.coreApiUrl}/marketplace/backoffice/product-approvals/${request_id}`,
               {
-                method: 'POST',
+                method: 'PATCH',
                 body: JSON.stringify({ approved_to_marketplace: false }),
                 headers: {
                   Authorization: `Basic ${credentials}`,
@@ -224,6 +224,131 @@ export class PluginOperationsServer extends Plugin {
             }
           } catch (error: any) {
             ctx.throw(404, error?.message);
+          }
+
+          await next();
+        },
+        emListBanners: async (ctx, next) => {
+          const { page = 0, pageSize = 30, country } = ctx.action?.params || {};
+
+          try {
+            const params = new URLSearchParams({
+              page: String(page),
+              limit: String(pageSize),
+            });
+            if (country) params.append('country', country);
+
+            const response = await fetch(`${config.coreApiUrl}/marketplace/products/banners?${params.toString()}`, {
+              headers: {
+                Authorization: `Basic ${credentials}`,
+              },
+            });
+
+            const res = await response.json();
+
+            ctx.body = {
+              data: res?.data || [],
+              meta: {
+                count: res?.meta?.total || 0,
+                total: res?.meta?.total || 0,
+                page,
+                pageSize,
+                totalPages: Math.ceil((res?.meta?.total || 0) / pageSize),
+              },
+            };
+          } catch (error: any) {
+            ctx.throw(500, error.message);
+          }
+
+          await next();
+        },
+
+        emUpdateBanners: async (ctx, next) => {
+          const { event_ids, is_banner } = ctx.action?.params || {};
+
+          try {
+            const response = await fetch(`${config.coreApiUrl}/marketplace/backoffice/products/banner`, {
+              method: 'POST',
+              body: JSON.stringify({ product_ids: event_ids, is_banner: is_banner === 'true' }),
+              headers: {
+                Authorization: `Basic ${credentials}`,
+                'Content-Type': 'application/json',
+                Accept: 'application/json',
+              },
+            });
+
+            const res = await response.json();
+
+            if (res.success === true) {
+              ctx.body = { message: res.message };
+            } else {
+              ctx.throw(400, res?.message || 'Failed to update banners');
+            }
+          } catch (error: any) {
+            ctx.throw(500, error?.message);
+          }
+
+          await next();
+        },
+
+        emListFeatured: async (ctx, next) => {
+          const { page = 0, pageSize = 30, country } = ctx.action?.params || {};
+
+          try {
+            const params = new URLSearchParams({
+              page: String(page),
+              limit: String(pageSize),
+            });
+            if (country) params.append('country', country);
+
+            const response = await fetch(`${config.coreApiUrl}/marketplace/products/featured?${params.toString()}`, {
+              headers: {
+                Authorization: `Basic ${credentials}`,
+              },
+            });
+
+            const res = await response.json();
+
+            ctx.body = {
+              data: res?.data || [],
+              meta: {
+                count: res?.meta?.total || 0,
+                total: res?.meta?.total || 0,
+                page,
+                pageSize,
+                totalPages: Math.ceil((res?.meta?.total || 0) / pageSize),
+              },
+            };
+          } catch (error: any) {
+            ctx.throw(500, error.message);
+          }
+
+          await next();
+        },
+
+        emUpdateFeatured: async (ctx, next) => {
+          const { event_ids, is_featured } = ctx.action?.params || {};
+
+          try {
+            const response = await fetch(`${config.coreApiUrl}/marketplace/backoffice/products/featured`, {
+              method: 'POST',
+              body: JSON.stringify({ product_ids: event_ids, is_featured }),
+              headers: {
+                Authorization: `Basic ${credentials}`,
+                'Content-Type': 'application/json',
+                Accept: 'application/json',
+              },
+            });
+
+            const res = await response.json();
+
+            if (res.success === true) {
+              ctx.body = { message: res.message };
+            } else {
+              ctx.throw(400, res?.message || 'Failed to update featured events');
+            }
+          } catch (error: any) {
+            ctx.throw(500, error?.message);
           }
 
           await next();

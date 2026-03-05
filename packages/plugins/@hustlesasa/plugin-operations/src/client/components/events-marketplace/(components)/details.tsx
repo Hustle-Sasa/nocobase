@@ -1,22 +1,30 @@
 import React from 'react';
 import { Button, Descriptions, Drawer, Flex, Image, message, Modal, Space } from 'antd';
+import { useAPIClient } from '@nocobase/client';
 
 import { handleFormatDateTime } from '../../../utls/helper';
 import { DataItem } from './type';
-import { useAPIClient } from '@nocobase/client';
 
 function Details({
   request,
   children,
   refresh,
+  open: controlledOpen,
+  onClose: controlledOnClose,
 }: {
   request: DataItem;
   refresh: () => void;
+  open?: boolean;
+  onClose?: () => void;
   children: (props: { proceed: () => void }) => React.ReactNode;
 }) {
   // states
-  const [open, setOpen] = React.useState(false);
+  const [internalOpen, setInternalOpen] = React.useState(false);
   const [product, setProduct] = React.useState<DataItem['product']>();
+
+  const isControlled = controlledOpen !== undefined;
+  const open = isControlled ? controlledOpen : internalOpen;
+  const handleClose = () => (isControlled ? controlledOnClose?.() : setInternalOpen(false));
 
   // handlers
   const handlePrice = (price: { [x: string]: number }) => {
@@ -36,14 +44,14 @@ function Details({
   return (
     product && (
       <>
-        {children({ proceed: () => setOpen(true) })}
+        {children({ proceed: () => setInternalOpen(true) })}
         <Drawer
           open={open}
           closable={false}
           placement="right"
           title="Event Details"
           style={{ maxWidth: '100vw' }}
-          onClose={() => setOpen(false)}
+          onClose={handleClose}
           width={typeof window !== 'undefined' && window.innerWidth >= 992 ? '50%' : '100%'}
           extra={
             <>
@@ -228,25 +236,3 @@ function Reject({
 }
 
 export default Details;
-
-// Shop name
-// Shop ID
-// Shop link
-// Product Title
-// Product Description
-// Product Category
-// Product type (single or group)
-// Product Regular Price
-// Product Sale Price
-// Status (Active/Inactive)
-// Product Image
-// Event start date
-// Event end date
-// Event start time
-// Event end time
-// Inventory (stock quantity)
-// Event category
-// Ticket Option (variations)
-// Venue
-// Date product was requested
-// Country

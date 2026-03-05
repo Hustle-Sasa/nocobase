@@ -1,11 +1,18 @@
 import React from 'react';
-import { Button, Flex, Image, Input, message, Select, Table, TableColumnsType } from 'antd';
-import { useRequest, withDynamicSchemaProps } from '@nocobase/client';
+import { Button, Flex, Image, Input, message, Table, TableColumnsType } from 'antd';
 import { DeleteFilled, ReloadOutlined, SearchOutlined } from '@ant-design/icons';
+import { useAPIClient, useRequest, withDynamicSchemaProps } from '@nocobase/client';
+import { DragDropProvider } from '@dnd-kit/react';
+import { useSortable } from '@dnd-kit/react/sortable';
+import { move } from '@dnd-kit/helpers';
 
-import { DataItem, dummyDataItems } from './type';
 import { handleFormatDateTime } from '../../../utls/helper';
+import { type DataItem } from '../(components)/type';
 import { BlockName } from './constant';
+import CountrySelector from '../(components)/country-selector';
+
+const AddEvent = React.lazy(() => import('../(components)/add-events'));
+const Details = React.lazy(() => import('../(components)/details'));
 
 export const Featured = withDynamicSchemaProps(
   () => {
@@ -13,21 +20,35 @@ export const Featured = withDynamicSchemaProps(
 
     // states
     const [search, setSearch] = React.useState('');
-    const [filters, setFilters] = React.useState<{ status?: string; country?: string }>({});
-    const [pagination, setPagination] = React.useState({
-      current: 1,
-      pageSize: 30,
-      total: 0,
-    });
+    const [filters, setFilters] = React.useState<{ status?: string; country?: string }>({ country: 'KE' });
+    const [pagination, setPagination] = React.useState({ current: 1, pageSize: 30, total: 0 });
+    const [items, setItems] = React.useState<DataItem['product'][]>([]);
+    const [viewItem, setViewItem] = React.useState<DataItem | null>(null);
 
     // api
+    const api = useAPIClient();
+    const { run: updateFeatured, loading: updating } = useRequest(
+      (event_ids: string[], is_featured: boolean) =>
+        api.request({ url: 'operations:emUpdateFeatured', method: 'POST', params: { event_ids, is_featured } }),
+      {
+        manual: true,
+        onSuccess() {
+          messageApi.success('Featured events updated successfully');
+          refresh();
+        },
+        onError(e: any) {
+          messageApi.error(e?.message || 'Failed to update featured events');
+        },
+      },
+    );
+
     const {
       data: response,
       loading,
       refresh,
-    } = useRequest<{ data: { data: DataItem[]; meta: any } }>(
+    } = useRequest<{ data: { data: DataItem['product'][]; meta: any } }>(
       {
-        url: 'operations:emRequestList',
+        url: 'operations:emListFeatured',
         params: {
           page: pagination.current,
           limit: pagination.pageSize,
@@ -38,10 +59,8 @@ export const Featured = withDynamicSchemaProps(
         debounceWait: 300,
         refreshDeps: [search, pagination.current, pagination.pageSize, filters],
         onSuccess(res) {
-          setPagination((prev) => ({
-            ...prev,
-            total: res?.meta?.total || 0,
-          }));
+          setItems(res?.data?.data || []);
+          setPagination((prev) => ({ ...prev, total: res?.meta?.total || 0 }));
         },
         onError() {
           messageApi.error('Failed to fetch requests');
@@ -66,10 +85,7 @@ export const Featured = withDynamicSchemaProps(
     };
 
     // variables
-    const data = response?.data?.data || [];
-    const meta = response?.data?.meta || {};
-
-    const colums: TableColumnsType<DataItem> = [
+    const colums: TableColumnsType<DataItem['product']> = [
       {
         title: 'ID',
         dataIndex: 'id',
@@ -136,12 +152,21 @@ export const Featured = withDynamicSchemaProps(
         key: 'action',
         render: (_, record) => {
           return (
-            <Button
-              type="link"
-              color="danger"
-              icon={<DeleteFilled />}
-              onClick={() => messageApi.info(`Delete request ${record.id}`)}
-            />
+            <>
+              <Details request={{ product: record } as DataItem} refresh={refresh}>
+                {({ proceed }) => (
+                  <Button color="primary" type="link" style={{ color: '#00cc99' }} onClick={proceed}>
+                    View Event
+                  </Button>
+                )}
+              </Details>
+              <Button
+                type="link"
+                color="danger"
+                icon={<DeleteFilled />}
+                onClick={() => updateFeatured([record.id], false)}
+              />
+            </>
           );
         },
       },
@@ -153,23 +178,10 @@ export const Featured = withDynamicSchemaProps(
 
         <Flex style={{ marginBottom: 16 }} gap={6} justify="space-between" align="center">
           <Flex align="center" gap={6}>
-            <Select
-              allowClear
-              style={{ width: 300 }}
+            <CountrySelector
               value={filters?.country}
-              placeholder="Filter by country"
               onChange={(value) => setFilters((prev) => ({ ...prev, country: value }))}
-            >
-              {[
-                { value: 'GH', label: 'Ghana' },
-                { value: 'NG', label: 'Nigeria' },
-                { value: 'KE', label: 'Kenya' },
-              ].map((option) => (
-                <Select.Option key={option.value} value={option.value}>
-                  {option.label}
-                </Select.Option>
-              ))}
-            </Select>
+            />
           </Flex>
 
           <Flex align="center" justify="flex" gap={8}>
@@ -185,34 +197,71 @@ export const Featured = withDynamicSchemaProps(
             <Button icon={<ReloadOutlined />} onClick={refresh} loading={loading}>
               Refresh
             </Button>
-            <Button color="primary">Add Events</Button>
+            <AddEvent
+              title="Featured Event"
+              country={filters?.country}
+              submitting={updating}
+              onSubmit={(selectedIds) => updateFeatured(selectedIds, true)}
+            >
+              {({ proceed }) => (
+                <Button color="primary" onClick={proceed}>
+                  Add Events
+                </Button>
+              )}
+            </AddEvent>
           </Flex>
         </Flex>
 
-        <Table
-          dataSource={dummyDataItems}
-          columns={colums}
-          loading={loading}
-          pagination={{
-            current: pagination.current,
-            pageSize: pagination.pageSize,
-            total: pagination.total,
-            showSizeChanger: false,
-            showPrevNextJumpers: true,
-            showQuickJumper: false,
-            showTotal: (total, range) => `${range[0]}-${range[1]} of ${total} items`,
-            pageSizeOptions: ['10', '20', '30', '50', '100'],
-            onChange: (page, pageSize) => {
-              setPagination((prev) => ({
-                ...prev,
-                current: page,
-                pageSize,
-              }));
-            },
-          }}
-        />
+        <DragDropProvider onDragEnd={(event) => setItems((data) => move(data, event))}>
+          <Table
+            rowKey="id"
+            columns={colums}
+            loading={loading}
+            dataSource={items}
+            components={{ body: { row: SortableRow } }}
+            onRow={(record, index) => ({
+              index,
+              style: { cursor: 'pointer' },
+              onClick: () => setViewItem({ id: record.id, status: 'approved', approved_to_marketplace: true, product: record }),
+            } as React.HTMLAttributes<HTMLElement>)}
+            pagination={{
+              current: pagination.current,
+              pageSize: pagination.pageSize,
+              total: pagination.total,
+              showSizeChanger: false,
+              showPrevNextJumpers: true,
+              showQuickJumper: false,
+              showTotal: (total, range) => `${range[0]}-${range[1]} of ${total} items`,
+              pageSizeOptions: ['10', '20', '30', '50', '100'],
+              onChange: (page, pageSize) => {
+                setPagination((prev) => ({
+                  ...prev,
+                  current: page,
+                  pageSize,
+                }));
+              },
+            }}
+          />
+        </DragDropProvider>
+
+        {viewItem && (
+          <Details
+            request={viewItem}
+            refresh={refresh}
+            open={true}
+            onClose={() => setViewItem(null)}
+          >
+            {() => null}
+          </Details>
+        )}
       </div>
     );
   },
   { displayName: BlockName },
 );
+
+function SortableRow({ index, ...props }: React.HTMLAttributes<HTMLTableRowElement> & { index?: number }) {
+  const id = (props as any)['data-row-key'];
+  const { ref } = useSortable({ id, index: index ?? 0 });
+  return <tr ref={ref} {...props} />;
+}

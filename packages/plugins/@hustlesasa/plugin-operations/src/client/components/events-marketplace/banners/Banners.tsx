@@ -1,14 +1,17 @@
 import React from 'react';
-import { Card, Flex, message, Grid, Drawer, Space, Button, Input, Table, Select, Image, Checkbox } from 'antd';
-import { DeleteFilled, PlusOutlined, SearchOutlined } from '@ant-design/icons';
-import { withDynamicSchemaProps } from '@nocobase/client';
+import { DeleteFilled, PlusOutlined, ReloadOutlined } from '@ant-design/icons';
+import { useAPIClient, useRequest, withDynamicSchemaProps } from '@nocobase/client';
+import { Card, Flex, message, Grid, Button } from 'antd';
 import { DragDropProvider } from '@dnd-kit/react';
 import { useSortable } from '@dnd-kit/react/sortable';
 import { move } from '@dnd-kit/helpers';
 
-import { dummyDataItems, type DataItem } from './type';
+import { type DataItem } from '../(components)/type';
 import { BlockName } from './constant';
-import { handleFormatDateTime } from '../../../utls/helper';
+
+const CountrySelector = React.lazy(() => import('../(components)/country-selector'));
+const AddEvent = React.lazy(() => import('../(components)/add-events'));
+const Details = React.lazy(() => import('../(components)/details'));
 
 export const Banners = withDynamicSchemaProps(
   () => {
@@ -19,29 +22,63 @@ export const Banners = withDynamicSchemaProps(
     const cols = screens.xl ? 4 : screens.lg ? 3 : screens.sm ? 2 : 1;
 
     // states
-    const [items, setItems] = React.useState<DataItem[]>(dummyDataItems);
-    const [filters, setFilters] = React.useState<{ country?: string }>({});
+    const [items, setItems] = React.useState<DataItem[]>([]);
+    const [filters, setFilters] = React.useState<{ country?: string }>({ country: 'KE' });
+    const [pagination, setPagination] = React.useState({ current: 1, pageSize: 30, total: 0 });
+    const [viewItem, setViewItem] = React.useState<DataItem | null>(null);
+
+    // api
+    const api = useAPIClient();
+    const { run: updateBanners, loading: updating } = useRequest(
+      (event_ids: string[], is_banner: boolean) =>
+        api.request({ url: 'operations:emUpdateBanners', method: 'POST', params: { event_ids, is_banner } }),
+      {
+        manual: true,
+        onSuccess() {
+          messageApi.success('Banners updated successfully');
+          refresh();
+        },
+        onError(e: any) {
+          messageApi.error(e?.message || 'Failed to update banners');
+        },
+      },
+    );
+
+    const { loading, refresh } = useRequest<{ data: { data: DataItem[]; meta: any } }>(
+      {
+        url: 'operations:emListBanners',
+        params: {
+          page: pagination.current,
+          pageSize: pagination.pageSize,
+          ...filters,
+        },
+      },
+      {
+        debounceWait: 300,
+        refreshDeps: [pagination.current, pagination.pageSize, filters],
+        onSuccess(res) {
+          setItems(res?.data?.data || []);
+          setPagination((prev) => ({ ...prev, total: res?.meta?.total || 0 }));
+        },
+        onError() {
+          messageApi.error('Failed to fetch banners');
+        },
+      },
+    );
 
     return (
       <Flex vertical gap={24}>
         {contextHolder}
-        <Select
-          allowClear
-          style={{ width: 300 }}
-          value={filters?.country}
-          placeholder="Filter by country"
-          onChange={(value) => setFilters((prev) => ({ ...prev, country: value }))}
-        >
-          {[
-            { value: 'GH', label: 'Ghana' },
-            { value: 'NG', label: 'Nigeria' },
-            { value: 'KE', label: 'Kenya' },
-          ].map((option) => (
-            <Select.Option key={option.value} value={option.value}>
-              {option.label}
-            </Select.Option>
-          ))}
-        </Select>
+
+        <Flex align="center" gap={8}>
+          <CountrySelector
+            value={filters?.country}
+            onChange={(value) => setFilters((prev) => ({ ...prev, country: value }))}
+          />
+          <Button icon={<ReloadOutlined />} onClick={refresh} loading={loading}>
+            Refresh
+          </Button>
+        </Flex>
 
         <DragDropProvider onDragEnd={(event) => setItems((items) => move(items, event))}>
           <div
@@ -51,14 +88,26 @@ export const Banners = withDynamicSchemaProps(
               padding: 0,
               display: 'grid',
               listStyle: 'none',
+              gridAutoRows: 'minmax(200px, auto)',
               gridTemplateColumns: `repeat(${cols}, 1fr)`,
             }}
           >
             {items.map((item, key) => (
-              <Sortable key={item.id} item={item} index={key} />
+              <Sortable
+                key={item.id}
+                item={item}
+                index={key}
+                onDelete={() => updateBanners([item.id], false)}
+                onView={() => setViewItem(item)}
+              />
             ))}
 
-            <AddBanner>
+            <AddEvent
+              title="Banner"
+              submitting={updating}
+              country={filters?.country}
+              onSubmit={(selectedIds) => updateBanners(selectedIds, true)}
+            >
               {({ proceed }) => (
                 <Card
                   hoverable
@@ -72,170 +121,59 @@ export const Banners = withDynamicSchemaProps(
                   </div>
                 </Card>
               )}
-            </AddBanner>
+            </AddEvent>
           </div>
         </DragDropProvider>
+
+        {viewItem && (
+          <Details request={viewItem} refresh={refresh} open={true} onClose={() => setViewItem(null)}>
+            {() => null}
+          </Details>
+        )}
       </Flex>
     );
   },
   { displayName: BlockName },
 );
 
-function Sortable({ item, index }: { item: DataItem; index: number }) {
+function Sortable({
+  item,
+  index,
+  onDelete,
+  onView,
+}: {
+  item: DataItem;
+  index: number;
+  onDelete: () => void;
+  onView: () => void;
+}) {
   const { ref } = useSortable({ id: item.id, index });
 
   return (
     <Card
       hoverable
       ref={ref}
-      actions={[<DeleteFilled />]}
-      style={{ width: '100%', height: '100%' }}
+      onClick={onView}
+      actions={[
+        <DeleteFilled
+          onClick={(e) => {
+            e.stopPropagation();
+            onDelete();
+          }}
+        />,
+      ]}
+      style={{ width: '100%', height: '100%', cursor: 'pointer' }}
       cover={
         <img
           alt="cover"
           draggable={false}
-          src={item.cover.url}
+          src={item.product.cover.url}
           style={{ height: 256, width: '100%', objectFit: 'cover', objectPosition: 'center' }}
         />
       }
     >
-      <Card.Meta title={item.title} />
+      <Card.Meta title={item.product.title} />
     </Card>
-  );
-}
-
-function AddBanner({ children }: { children: (props: { proceed: () => void }) => React.ReactNode }) {
-  // states
-  const [open, setOpen] = React.useState(false);
-  const [search, setSearch] = React.useState('');
-  const [selected, setSelected] = React.useState<string[]>([]);
-  const [pagination, setPagination] = React.useState({
-    current: 1,
-    pageSize: 30,
-    total: 0,
-  });
-
-  return (
-    <>
-      {children({ proceed: () => setOpen(true) })}
-      <Drawer
-        open={open}
-        closable={false}
-        placement="right"
-        style={{ maxWidth: '100vw' }}
-        onClose={() => setOpen(false)}
-        width={typeof window !== 'undefined' && window.innerWidth >= 992 ? '50%' : '100%'}
-        title="Add Banner(s)"
-        extra={
-          <Space>
-            <Button onClick={() => setOpen(false)}>Cancel</Button>
-            <Button
-              type="primary"
-              onClick={() => {
-                setOpen(false);
-              }}
-            >
-              Update
-            </Button>
-          </Space>
-        }
-      >
-        <Flex justify="end" style={{ marginBottom: 24 }}>
-          <Input.Search
-            allowClear
-            value={search}
-            enterButton={<SearchOutlined />}
-            placeholder="Search by event title"
-            style={{ width: '100%', maxWidth: 320 }}
-            onChange={(e) => setSearch(e.target.value)}
-          />
-        </Flex>
-
-        <Table
-          columns={[
-            {
-              title: '',
-              key: 'action',
-              dataIndex: 'id',
-              render: (id) => {
-                return (
-                  <Checkbox
-                    checked={selected.includes(id)}
-                    onChange={(e) => {
-                      if (e.target.checked) {
-                        setSelected((prev) => [...prev, id]);
-                      } else {
-                        setSelected((prev) => prev.filter((item) => item !== id));
-                      }
-                    }}
-                  />
-                );
-              },
-            },
-            {
-              title: 'Shop Name',
-              dataIndex: ['hustle', 'name'],
-              key: 'hustle.name',
-            },
-            {
-              title: 'Event',
-              dataIndex: 'title',
-              key: 'title',
-              render: (_, { title, cover }) => {
-                return (
-                  <>
-                    <Image
-                      src={cover.url}
-                      alt={title}
-                      width={32}
-                      height={32}
-                      style={{
-                        objectFit: 'cover',
-                        objectPosition: 'center',
-                        borderRadius: 100,
-                      }}
-                    />
-                    <span style={{ marginLeft: 8 }}>{title}</span>
-                  </>
-                );
-              },
-            },
-            {
-              title: 'Start Date / Time',
-              dataIndex: ['default_extra_details', 'start_date'],
-              key: 'start_date',
-              render: (_, { default_extra_details: { start_date, start_time } }) =>
-                handleFormatDateTime(start_date, start_time),
-            },
-            {
-              title: 'End Date / Time',
-              dataIndex: ['default_extra_details', 'end_date'],
-              key: 'end_date',
-              render: (_, { default_extra_details: { end_date, end_time } }) =>
-                handleFormatDateTime(end_date, end_time),
-            },
-          ]}
-          dataSource={dummyDataItems}
-          pagination={{
-            current: pagination.current,
-            pageSize: pagination.pageSize,
-            total: pagination.total,
-            showSizeChanger: false,
-            showPrevNextJumpers: true,
-            showQuickJumper: false,
-            showTotal: (total, range) => `${range[0]}-${range[1]} of ${total} items`,
-            pageSizeOptions: ['10', '20', '30', '50', '100'],
-            onChange: (page, pageSize) => {
-              setPagination((prev) => ({
-                ...prev,
-                current: page,
-                pageSize,
-              }));
-            },
-          }}
-        />
-      </Drawer>
-    </>
   );
 }
 

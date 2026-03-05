@@ -4,10 +4,11 @@ import { useRequest, withDynamicSchemaProps } from '@nocobase/client';
 import { ReloadOutlined, SearchOutlined } from '@ant-design/icons';
 
 import { handleFormatDateTime } from '../../../utls/helper';
+import { type DataItem } from '../(components)/type';
 import { BlockName } from './constant';
-import { DataItem } from './type';
+import CountrySelector from '../(components)/country-selector';
 
-const Details = React.lazy(() => import('./Details'));
+const Details = React.lazy(() => import('../(components)/details'));
 
 export const Requests = withDynamicSchemaProps(
   () => {
@@ -15,7 +16,7 @@ export const Requests = withDynamicSchemaProps(
 
     // states
     const [search, setSearch] = React.useState('');
-    const [filters, setFilters] = React.useState<{ status?: string; country?: string }>({});
+    const [filters, setFilters] = React.useState<{ status?: string; country?: string }>({ country: 'KE' });
     const [pagination, setPagination] = React.useState({
       current: 1,
       pageSize: 15,
@@ -69,7 +70,6 @@ export const Requests = withDynamicSchemaProps(
 
     // variables
     const data = response?.data?.data || [];
-    console.log('Data:', data);
     const colums: TableColumnsType<DataItem> = [
       {
         title: 'Shop Name',
@@ -189,23 +189,10 @@ export const Requests = withDynamicSchemaProps(
                 </Select.Option>
               ))}
             </Select>
-            <Select
-              allowClear
-              style={{ width: 300 }}
+            <CountrySelector
               value={filters?.country}
-              placeholder="Filter by country"
               onChange={(value) => setFilters((prev) => ({ ...prev, country: value }))}
-            >
-              {[
-                { value: 'GH', label: 'Ghana' },
-                { value: 'NG', label: 'Nigeria' },
-                { value: 'KE', label: 'Kenya' },
-              ].map((option) => (
-                <Select.Option key={option.value} value={option.value}>
-                  {option.label}
-                </Select.Option>
-              ))}
-            </Select>
+            />
           </Flex>
 
           <Flex align="center" justify="flex" gap={8}>
