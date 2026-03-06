@@ -1,6 +1,6 @@
 import React from 'react';
-import { Button, Flex, Image, Input, message, Table, TableColumnsType } from 'antd';
-import { DeleteFilled, ReloadOutlined, SearchOutlined } from '@ant-design/icons';
+import { Button, Flex, Image, Input, message, Modal, Table, TableColumnsType } from 'antd';
+import { DeleteFilled, HolderOutlined, ReloadOutlined, SearchOutlined } from '@ant-design/icons';
 import { useAPIClient, useRequest, withDynamicSchemaProps } from '@nocobase/client';
 import { DragDropProvider } from '@dnd-kit/react';
 import { useSortable } from '@dnd-kit/react/sortable';
@@ -23,7 +23,6 @@ export const Featured = withDynamicSchemaProps(
     const [filters, setFilters] = React.useState<{ status?: string; country?: string }>({ country: 'KE' });
     const [pagination, setPagination] = React.useState({ current: 1, pageSize: 30, total: 0 });
     const [items, setItems] = React.useState<DataItem['product'][]>([]);
-    const [viewItem, setViewItem] = React.useState<DataItem | null>(null);
 
     // api
     const api = useAPIClient();
@@ -42,11 +41,7 @@ export const Featured = withDynamicSchemaProps(
       },
     );
 
-    const {
-      data: response,
-      loading,
-      refresh,
-    } = useRequest<{ data: { data: DataItem['product'][]; meta: any } }>(
+    const { loading, refresh } = useRequest<{ data: { data: DataItem['product'][]; meta: any } }>(
       {
         url: 'operations:emListFeatured',
         params: {
@@ -69,13 +64,6 @@ export const Featured = withDynamicSchemaProps(
     );
 
     // handlers
-    const handleStatus = (approvedToMarketplace: boolean | null): { text: string; color: string } => {
-      if (approvedToMarketplace === null) {
-        return { text: 'Pending', color: 'orange' };
-      }
-      return approvedToMarketplace ? { text: 'Approved', color: 'green' } : { text: 'Rejected', color: 'red' };
-    };
-
     const handleSearch = () => {
       setPagination((prev) => ({
         ...prev,
@@ -86,6 +74,17 @@ export const Featured = withDynamicSchemaProps(
 
     // variables
     const colums: TableColumnsType<DataItem['product']> = [
+      {
+        title: '',
+        key: 'drag',
+        width: 32,
+        render: () => <HolderOutlined style={{ cursor: 'grab', color: '#999' }} />,
+      },
+      {
+        title: '#',
+        key: 'position',
+        render: (_, __, index) => (pagination.current - 1) * pagination.pageSize + index + 1,
+      },
       {
         title: 'ID',
         dataIndex: 'id',
@@ -162,9 +161,24 @@ export const Featured = withDynamicSchemaProps(
               </Details>
               <Button
                 type="link"
-                color="danger"
+                danger
                 icon={<DeleteFilled />}
-                onClick={() => updateFeatured([record.id], false)}
+                onClick={() =>
+                  Modal.confirm({
+                    title: 'Remove Featured Event',
+                    content: 'Are you sure you want to remove this event from featured?',
+                    okText: 'Yes, Remove',
+                    okButtonProps: { danger: true },
+                    cancelText: 'No, Cancel',
+                    onOk: () => updateFeatured([record.id], false),
+                    footer: (_, { OkBtn, CancelBtn }) => (
+                      <>
+                        <CancelBtn />
+                        <OkBtn />
+                      </>
+                    ),
+                  })
+                }
               />
             </>
           );
@@ -219,11 +233,6 @@ export const Featured = withDynamicSchemaProps(
             loading={loading}
             dataSource={items}
             components={{ body: { row: SortableRow } }}
-            onRow={(record, index) => ({
-              index,
-              style: { cursor: 'pointer' },
-              onClick: () => setViewItem({ id: record.id, status: 'approved', approved_to_marketplace: true, product: record }),
-            } as React.HTMLAttributes<HTMLElement>)}
             pagination={{
               current: pagination.current,
               pageSize: pagination.pageSize,
@@ -243,17 +252,6 @@ export const Featured = withDynamicSchemaProps(
             }}
           />
         </DragDropProvider>
-
-        {viewItem && (
-          <Details
-            request={viewItem}
-            refresh={refresh}
-            open={true}
-            onClose={() => setViewItem(null)}
-          >
-            {() => null}
-          </Details>
-        )}
       </div>
     );
   },
@@ -263,5 +261,5 @@ export const Featured = withDynamicSchemaProps(
 function SortableRow({ index, ...props }: React.HTMLAttributes<HTMLTableRowElement> & { index?: number }) {
   const id = (props as any)['data-row-key'];
   const { ref } = useSortable({ id, index: index ?? 0 });
-  return <tr ref={ref} {...props} />;
+  return <tr ref={ref} style={{ background: 'white' }} {...props} />;
 }

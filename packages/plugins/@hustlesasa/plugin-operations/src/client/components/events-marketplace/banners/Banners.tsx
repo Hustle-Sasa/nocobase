@@ -1,7 +1,7 @@
 import React from 'react';
 import { DeleteFilled, PlusOutlined, ReloadOutlined } from '@ant-design/icons';
 import { useAPIClient, useRequest, withDynamicSchemaProps } from '@nocobase/client';
-import { Card, Flex, message, Grid, Button } from 'antd';
+import { Card, Flex, message, Modal, Grid, Button, Skeleton } from 'antd';
 import { DragDropProvider } from '@dnd-kit/react';
 import { useSortable } from '@dnd-kit/react/sortable';
 import { move } from '@dnd-kit/helpers';
@@ -22,10 +22,10 @@ export const Banners = withDynamicSchemaProps(
     const cols = screens.xl ? 4 : screens.lg ? 3 : screens.sm ? 2 : 1;
 
     // states
-    const [items, setItems] = React.useState<DataItem[]>([]);
+    const [items, setItems] = React.useState<DataItem['product'][]>([]);
     const [filters, setFilters] = React.useState<{ country?: string }>({ country: 'KE' });
     const [pagination, setPagination] = React.useState({ current: 1, pageSize: 30, total: 0 });
-    const [viewItem, setViewItem] = React.useState<DataItem | null>(null);
+    const [viewItem, setViewItem] = React.useState<DataItem['product'] | null>(null);
 
     // api
     const api = useAPIClient();
@@ -44,7 +44,7 @@ export const Banners = withDynamicSchemaProps(
       },
     );
 
-    const { loading, refresh } = useRequest<{ data: { data: DataItem[]; meta: any } }>(
+    const { loading, refresh } = useRequest<{ data: { data: DataItem['product'][]; meta: any } }>(
       {
         url: 'operations:emListBanners',
         params: {
@@ -92,15 +92,25 @@ export const Banners = withDynamicSchemaProps(
               gridTemplateColumns: `repeat(${cols}, 1fr)`,
             }}
           >
-            {items.map((item, key) => (
-              <Sortable
-                key={item.id}
-                item={item}
-                index={key}
-                onDelete={() => updateBanners([item.id], false)}
-                onView={() => setViewItem(item)}
-              />
-            ))}
+            {loading
+              ? Array.from({ length: cols }).map((_, i) => (
+                  <Card
+                    key={i}
+                    style={{ width: '100%', height: '100%' }}
+                    cover={<div style={{ height: 256, background: '#f0f0f0' }} />}
+                  >
+                    <Skeleton active title={{ width: '60%' }} paragraph={false} />
+                  </Card>
+                ))
+              : items.map((item, key) => (
+                  <Sortable
+                    item={item}
+                    index={key}
+                    key={item.id}
+                    onDelete={() => updateBanners([item.id], false)}
+                    onView={() => setViewItem(item)}
+                  />
+                ))}
 
             <AddEvent
               title="Banner"
@@ -126,7 +136,12 @@ export const Banners = withDynamicSchemaProps(
         </DragDropProvider>
 
         {viewItem && (
-          <Details request={viewItem} refresh={refresh} open={true} onClose={() => setViewItem(null)}>
+          <Details
+            open={true}
+            refresh={refresh}
+            onClose={() => setViewItem(null)}
+            request={{ product: viewItem } as DataItem}
+          >
             {() => null}
           </Details>
         )}
@@ -142,8 +157,8 @@ function Sortable({
   onDelete,
   onView,
 }: {
-  item: DataItem;
   index: number;
+  item: DataItem['product'];
   onDelete: () => void;
   onView: () => void;
 }) {
@@ -156,23 +171,56 @@ function Sortable({
       onClick={onView}
       actions={[
         <DeleteFilled
+          style={{ color: '#ff4d4f' }}
           onClick={(e) => {
             e.stopPropagation();
-            onDelete();
+            Modal.confirm({
+              title: 'Remove Banner',
+              content: 'Are you sure you want to remove this banner?',
+              okText: 'Yes, Remove',
+              okButtonProps: { danger: true },
+              cancelText: 'No, Cancel',
+              onOk: onDelete,
+              footer: (_, { OkBtn, CancelBtn }) => (
+                <>
+                  <CancelBtn />
+                  <OkBtn />
+                </>
+              ),
+            });
           }}
         />,
       ]}
-      style={{ width: '100%', height: '100%', cursor: 'pointer' }}
+      style={{ width: '100%', height: '100%', cursor: 'pointer', position: 'relative' }}
       cover={
         <img
           alt="cover"
           draggable={false}
-          src={item.product.cover.url}
+          src={item.cover.url}
           style={{ height: 256, width: '100%', objectFit: 'cover', objectPosition: 'center' }}
         />
       }
     >
-      <Card.Meta title={item.product.title} />
+      <span
+        style={{
+          top: 8,
+          left: 8,
+          width: 32,
+          height: 32,
+          fontSize: 14,
+          color: 'white',
+          display: 'flex',
+          fontWeight: 'bold',
+          borderRadius: '50%',
+          position: 'absolute',
+          alignItems: 'center',
+          justifyContent: 'center',
+          backgroundColor: 'rgba(0,0,0,0.8)',
+        }}
+      >
+        {index + 1}
+      </span>
+      <Card.Meta title={item.title} />
     </Card>
   );
 }

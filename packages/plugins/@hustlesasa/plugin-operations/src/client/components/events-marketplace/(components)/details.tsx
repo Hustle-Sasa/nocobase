@@ -125,7 +125,7 @@ function Details({
               {product.variants.map((variant, index) => (
                 <Descriptions
                   key={index}
-                  style={{ marginBottom: 16 }}
+                  style={{ marginBottom: 24 }}
                   layout="vertical"
                   items={[
                     { key: '0', label: 'Variant Title', children: variant.title },
