@@ -10,6 +10,7 @@ import { DataItem } from './type';
 
 function AddEvent({
   title,
+  exclude,
   children,
   onSubmit,
   country = 'KE',
@@ -18,22 +19,27 @@ function AddEvent({
   title: string;
   country?: string;
   submitting?: boolean;
-  onSubmit: (selectedIds: string[]) => void;
+  exclude: 'banners' | 'featured';
+  onSubmit: (selectedIds: string[], refresh: () => void) => void;
   children: (props: { proceed: () => void }) => React.ReactNode;
 }) {
   const [messageApi, contextHolder] = message.useMessage();
   const [open, setOpen] = React.useState(false);
   const [search, setSearch] = React.useState('');
   const [selected, setSelected] = React.useState<string[]>([]);
-  const [pagination, setPagination] = React.useState({ current: 1, pageSize: 30, total: 0 });
+  const [pagination, setPagination] = React.useState({ current: 1, pageSize: 15, total: 0 });
 
-  const { data: response, loading } = useRequest<{ data: { data: DataItem[]; meta: any } }>(
+  const {
+    data: response,
+    loading,
+    refresh,
+  } = useRequest<{ data: { data: DataItem['product'][]; meta: any } }>(
     {
-      url: 'operations:emRequestList',
+      url: 'operations:emListProducts',
       params: {
         search,
         country,
-        status: 'approved',
+        exclude,
         page: pagination.current,
         pageSize: pagination.pageSize,
       },
@@ -73,8 +79,9 @@ function AddEvent({
               loading={submitting}
               disabled={selected.length === 0}
               onClick={() => {
-                onSubmit(selected);
+                onSubmit(selected, refresh);
                 setOpen(false);
+                setSelected([]);
               }}
             >
               Update
@@ -98,7 +105,7 @@ function AddEvent({
             {
               title: '',
               key: 'action',
-              dataIndex: ['product', 'id'],
+              dataIndex: ['id'],
               render: (id) => (
                 <Checkbox
                   checked={selected.includes(id)}
@@ -114,14 +121,14 @@ function AddEvent({
             },
             {
               title: 'Shop Name',
-              dataIndex: ['product', 'hustle', 'name'],
+              dataIndex: ['hustle', 'name'],
               key: 'product.hustle.name',
             },
             {
               title: 'Event',
-              dataIndex: ['product', 'title'],
+              dataIndex: ['title'],
               key: 'product.title',
-              render: (_, { product: { title, cover } }) => (
+              render: (_, { title, cover }) => (
                 <>
                   <Image
                     alt={title}
@@ -136,37 +143,32 @@ function AddEvent({
             },
             {
               title: 'Start Date / Time',
-              dataIndex: ['product', 'default_extra_details', 'start_date'],
+              dataIndex: ['default_extra_details', 'start_date'],
               key: 'start_date',
-              render: (
-                _,
-                {
-                  product: {
-                    default_extra_details: { start_date, start_time },
-                  },
-                }: DataItem,
-              ) => handleFormatDateTime(start_date, start_time),
+              render: (_, { default_extra_details: { start_date, start_time } }: DataItem['product']) =>
+                handleFormatDateTime(start_date, start_time),
             },
             {
               title: 'End Date / Time',
-              dataIndex: ['product', 'default_extra_details', 'end_date'],
+              dataIndex: ['default_extra_details', 'end_date'],
               key: 'end_date',
-              render: (
-                _,
-                {
-                  product: {
-                    default_extra_details: { end_date, end_time },
-                  },
-                }: DataItem,
-              ) => handleFormatDateTime(end_date, end_time),
+              render: (_, { default_extra_details: { end_date, end_time } }: DataItem['product']) =>
+                handleFormatDateTime(end_date, end_time),
             },
             {
               title: '',
               key: 'view',
-              render: (_, record: DataItem) => (
-                <Details request={record} refresh={() => {}}>
+              render: (_, record: DataItem['product']) => (
+                <Details request={{ product: record } as DataItem} refresh={() => {}}>
                   {({ proceed }) => (
-                    <Button type="link" size="small" onClick={(e) => { e.stopPropagation(); proceed(); }}>
+                    <Button
+                      type="link"
+                      size="small"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        proceed();
+                      }}
+                    >
                       View Event
                     </Button>
                   )}

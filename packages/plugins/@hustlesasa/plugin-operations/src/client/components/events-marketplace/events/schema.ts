@@ -1,11 +1,11 @@
 import { ISchema } from '@nocobase/client';
 
-import { EventsMarketplaceRequestsSettings } from './settings';
+import { EventsMarketplaceEventsSettings } from './settings';
 import { BlockName, BlockNameLowercase } from './constant';
 
-export const EventsMarketplaceRequestsSchema: ISchema = {
+export const EventsMarketplaceEventsSchema: ISchema = {
   type: 'void',
-  'x-settings': EventsMarketplaceRequestsSettings.name,
+  'x-settings': EventsMarketplaceEventsSettings.name,
   properties: {
     [BlockNameLowercase]: {
       'x-component': BlockName,

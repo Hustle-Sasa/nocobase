@@ -10,7 +10,7 @@ import CountrySelector from '../(components)/country-selector';
 
 const Details = React.lazy(() => import('../(components)/details'));
 
-export const Requests = withDynamicSchemaProps(
+export const Events = withDynamicSchemaProps(
   () => {
     const [messageApi, contextHolder] = message.useMessage();
 

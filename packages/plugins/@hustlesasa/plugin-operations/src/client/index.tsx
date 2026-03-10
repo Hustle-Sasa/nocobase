@@ -3,8 +3,8 @@ import { Plugin } from '@nocobase/client';
 
 import { TicketAgentsSettings } from './components/ticket-agents/settings';
 import { TicketAgentsInitializerItem } from './components/ticket-agents/initializer';
-import { EventsMarketplaceRequestsSettings } from './components/events-marketplace/requests/settings';
-import { EventsMarketplaceRequestsInitializerItem } from './components/events-marketplace/requests/initializer';
+import { EventsMarketplaceEventsSettings } from './components/events-marketplace/events/settings';
+import { EventsMarketplaceEventsInitializerItem } from './components/events-marketplace/events/initializer';
 import { EventsMarketplaceBannersSettings } from './components/events-marketplace/banners/settings';
 import { EventsMarketplaceBannersInitializerItem } from './components/events-marketplace/banners/initializer';
 import { EventsMarketplaceFeaturedSettings } from './components/events-marketplace/featured/settings';
@@ -16,9 +16,9 @@ const TicketAgents = React.lazy(() =>
   })),
 );
 
-const EventsMarketplaceRequests = React.lazy(() =>
-  import('./components/events-marketplace/requests/Requests').then((module) => ({
-    default: module.Requests,
+const EventsMarketplaceEvents = React.lazy(() =>
+  import('./components/events-marketplace/events/Events').then((module) => ({
+    default: module.Events,
   })),
 );
 
@@ -45,7 +45,7 @@ export class PluginOperationsClient extends Plugin {
   async load() {
     this.app.addComponents({
       TicketAgents,
-      EventsMarketplaceRequests,
+      EventsMarketplaceEvents,
       EventsMarketplaceBanners,
       EventsMarketplaceFeatured,
     });
@@ -57,11 +57,11 @@ export class PluginOperationsClient extends Plugin {
       TicketAgentsInitializerItem,
     );
 
-    this.app.schemaSettingsManager.add(EventsMarketplaceRequestsSettings);
+    this.app.schemaSettingsManager.add(EventsMarketplaceEventsSettings);
     this.app.schemaInitializerManager.addItem(
       'page:addBlock',
-      `otherBlocks.${EventsMarketplaceRequestsInitializerItem.name}`,
-      EventsMarketplaceRequestsInitializerItem,
+      `otherBlocks.${EventsMarketplaceEventsInitializerItem.name}`,
+      EventsMarketplaceEventsInitializerItem,
     );
 
     this.app.schemaSettingsManager.add(EventsMarketplaceBannersSettings);

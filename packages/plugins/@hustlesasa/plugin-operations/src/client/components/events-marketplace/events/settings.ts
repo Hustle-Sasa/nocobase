@@ -2,7 +2,7 @@ import { SchemaSettings } from '@nocobase/client';
 
 import { BlockNameLowercase } from './constant';
 
-export const EventsMarketplaceRequestsSettings = new SchemaSettings({
+export const EventsMarketplaceEventsSettings = new SchemaSettings({
   name: `blockSettings:${BlockNameLowercase}`,
   items: [
     {

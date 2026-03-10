@@ -123,6 +123,44 @@ export class PluginOperationsServer extends Plugin {
           await next();
         },
 
+        emListProducts: async (ctx, next) => {
+          const { page = 0, pageSize = 30, search = '', country, exclude } = ctx.action?.params || {};
+
+          try {
+            // Fetch from external API
+            const params = new URLSearchParams({
+              page: String(page),
+              limit: String(pageSize),
+            });
+            if (search) params.append('search', search);
+            if (country) params.append('country', country);
+            if (exclude) params.append('exclude', exclude);
+
+            const response = await fetch(`${config.coreApiUrl}/marketplace/products?${params.toString()}`, {
+              headers: {
+                Authorization: `Basic ${credentials}`,
+              },
+            });
+
+            const res = await response.json();
+
+            ctx.body = {
+              data: res?.data || [],
+              meta: {
+                count: res?.meta?.pagination?.total_items || 0,
+                total: res?.meta?.pagination?.total_items || 0,
+                page,
+                pageSize,
+                totalPages: res?.meta?.pagination?.total_pages || 0,
+              },
+            };
+          } catch (error: any) {
+            ctx.throw(500, error.message);
+          }
+
+          await next();
+        },
+
         emRequestList: async (ctx, next) => {
           const { page = 0, pageSize = 30, search = '', status, country } = ctx.action?.params || {};
 
@@ -151,11 +189,11 @@ export class PluginOperationsServer extends Plugin {
               data: res?.data || [],
               res,
               meta: {
-                count: res?.meta?.total || 0,
-                total: res?.meta?.total || 0,
+                count: res?.meta?.pagination?.total_items || 0,
+                total: res?.meta?.pagination?.total_items || 0,
                 page,
                 pageSize,
-                totalPages: Math.ceil((res?.meta?.total || 0) / pageSize),
+                totalPages: res?.meta?.pagination?.total_pages || 0,
               },
             };
           } catch (error: any) {
@@ -249,11 +287,11 @@ export class PluginOperationsServer extends Plugin {
             ctx.body = {
               data: res?.data || [],
               meta: {
-                count: res?.meta?.total || 0,
-                total: res?.meta?.total || 0,
+                count: res?.meta?.pagination?.total_items || 0,
+                total: res?.meta?.pagination?.total_items || 0,
                 page,
                 pageSize,
-                totalPages: Math.ceil((res?.meta?.total || 0) / pageSize),
+                totalPages: res?.meta?.pagination?.total_pages || 0,
               },
             };
           } catch (error: any) {
@@ -312,11 +350,11 @@ export class PluginOperationsServer extends Plugin {
             ctx.body = {
               data: res?.data || [],
               meta: {
-                count: res?.meta?.total || 0,
-                total: res?.meta?.total || 0,
+                count: res?.meta?.pagination?.total_items || 0,
+                total: res?.meta?.pagination?.total_items || 0,
                 page,
                 pageSize,
-                totalPages: Math.ceil((res?.meta?.total || 0) / pageSize),
+                totalPages: res?.meta?.pagination?.total_pages || 0,
               },
             };
           } catch (error: any) {

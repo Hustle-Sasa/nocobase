@@ -114,9 +114,13 @@ export const Banners = withDynamicSchemaProps(
 
             <AddEvent
               title="Banner"
+              exclude="banners"
               submitting={updating}
               country={filters?.country}
-              onSubmit={(selectedIds) => updateBanners(selectedIds, true)}
+              onSubmit={(selectedIds, refresh) => {
+                updateBanners(selectedIds, true);
+                refresh();
+              }}
             >
               {({ proceed }) => (
                 <Card

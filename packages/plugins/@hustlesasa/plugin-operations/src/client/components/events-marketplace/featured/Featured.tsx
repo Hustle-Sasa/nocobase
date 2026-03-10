@@ -212,10 +212,14 @@ export const Featured = withDynamicSchemaProps(
               Refresh
             </Button>
             <AddEvent
+              exclude="featured"
+              submitting={updating}
               title="Featured Event"
               country={filters?.country}
-              submitting={updating}
-              onSubmit={(selectedIds) => updateFeatured(selectedIds, true)}
+              onSubmit={(selectedIds, refresh) => {
+                updateFeatured(selectedIds, true);
+                refresh();
+              }}
             >
               {({ proceed }) => (
                 <Button color="primary" onClick={proceed}>

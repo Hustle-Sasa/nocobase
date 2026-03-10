@@ -1,5 +1,5 @@
 import React from 'react';
-import { Button, Descriptions, Drawer, Flex, Image, message, Modal, Space } from 'antd';
+import { Badge, Button, Descriptions, Drawer, Flex, Image, message, Modal, Space, Tag } from 'antd';
 import { useAPIClient } from '@nocobase/client';
 
 import { handleFormatDateTime } from '../../../utls/helper';
@@ -72,6 +72,15 @@ function Details({
                     )}
                   </Approve>
                 </Space>
+              )}
+              {request.approved_to_marketplace !== null && (
+                <>
+                  {request.approved_to_marketplace ? (
+                    <Tag color="success">Approved</Tag>
+                  ) : (
+                    <Tag color="error">Rejected</Tag>
+                  )}
+                </>
               )}
             </>
           }
