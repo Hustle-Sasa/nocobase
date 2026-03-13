@@ -216,7 +216,7 @@ export const Events = withDynamicSchemaProps(
           columns={colums}
           dataSource={data}
           loading={loading}
-          scroll={{ x: true }}
+          scroll={{ x: 'max-content' }}
           pagination={{
             current: pagination.current,
             pageSize: pagination.pageSize,

@@ -44,13 +44,20 @@ export const Banners = withDynamicSchemaProps(
       },
     );
 
+    const { run: updatePositions } = useRequest(
+      (positions) => api.request({ url: 'operations:emUpdatePosition', method: 'POST', data: { positions } }),
+      {
+        manual: true,
+      },
+    );
+
     const { loading, refresh } = useRequest<{ data: { data: DataItem['product'][]; meta: any } }>(
       {
         url: 'operations:emListBanners',
         params: {
+          ...filters,
           page: pagination.current,
           pageSize: pagination.pageSize,
-          ...filters,
         },
       },
       {
@@ -80,7 +87,15 @@ export const Banners = withDynamicSchemaProps(
           </Button>
         </Flex>
 
-        <DragDropProvider onDragEnd={(event) => setItems((items) => move(items, event))}>
+        <DragDropProvider
+          onDragEnd={(event) => {
+            const newItems = move(items, event);
+            setItems(newItems);
+            updatePositions(
+              newItems.map((item, index) => ({ product_id: item.id, position: index + 1, type: 'banners' })),
+            );
+          }}
+        >
           <div
             style={{
               gap: 16,
