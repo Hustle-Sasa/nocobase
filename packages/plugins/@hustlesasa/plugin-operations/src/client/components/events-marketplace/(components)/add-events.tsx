@@ -101,6 +101,7 @@ function AddEvent({
         </Flex>
 
         <Table
+          scroll={{ x: 'max-content' }}
           columns={[
             {
               title: '',
@@ -123,11 +124,14 @@ function AddEvent({
               title: 'Shop Name',
               dataIndex: ['hustle', 'name'],
               key: 'product.hustle.name',
+              onHeaderCell: () => ({ style: { whiteSpace: 'nowrap' } }),
+              onCell: () => ({ style: { whiteSpace: 'nowrap' } }),
             },
             {
               title: 'Event',
               dataIndex: ['title'],
               key: 'product.title',
+              onCell: () => ({ style: { whiteSpace: 'nowrap' } }),
               render: (_, { title, cover }) => (
                 <>
                   <Image
@@ -145,6 +149,8 @@ function AddEvent({
               title: 'Start Date / Time',
               dataIndex: ['default_extra_details', 'start_date'],
               key: 'start_date',
+              onHeaderCell: () => ({ style: { whiteSpace: 'nowrap' } }),
+              onCell: () => ({ style: { whiteSpace: 'nowrap' } }),
               render: (_, { default_extra_details: { start_date, start_time } }: DataItem['product']) =>
                 handleFormatDateTime(start_date, start_time),
             },
@@ -152,6 +158,8 @@ function AddEvent({
               title: 'End Date / Time',
               dataIndex: ['default_extra_details', 'end_date'],
               key: 'end_date',
+              onHeaderCell: () => ({ style: { whiteSpace: 'nowrap' } }),
+              onCell: () => ({ style: { whiteSpace: 'nowrap' } }),
               render: (_, { default_extra_details: { end_date, end_time } }: DataItem['product']) =>
                 handleFormatDateTime(end_date, end_time),
             },

@@ -391,6 +391,27 @@ export class PluginOperationsServer extends Plugin {
 
           await next();
         },
+        emUpdatePosition: async (ctx, next) => {
+          const {
+            values: { positions },
+          } = ctx.action?.params || {};
+
+          try {
+            await fetch(`${config.coreApiUrl}/marketplace/update-position`, {
+              method: 'POST',
+              body: JSON.stringify(positions),
+              headers: {
+                Authorization: `Basic ${credentials}`,
+                'Content-Type': 'application/json',
+                Accept: 'application/json',
+              },
+            });
+          } catch (error: any) {
+            ctx.throw(500, error?.message);
+          }
+
+          await next();
+        },
       },
     });
 

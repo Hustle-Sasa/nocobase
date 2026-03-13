@@ -33,7 +33,7 @@ export const Events = withDynamicSchemaProps(
         url: 'operations:emRequestList',
         params: {
           page: pagination.current,
-          limit: pagination.pageSize,
+          pageSize: pagination.pageSize,
           ...filters,
         },
       },
@@ -215,7 +215,7 @@ export const Events = withDynamicSchemaProps(
           columns={colums}
           dataSource={data}
           loading={loading}
-          scroll={{ x: true }}
+          scroll={{ x: 'max-content' }}
           pagination={{
             current: pagination.current,
             pageSize: pagination.pageSize,

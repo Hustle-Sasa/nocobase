@@ -41,12 +41,19 @@ export const Featured = withDynamicSchemaProps(
       },
     );
 
+    const { run: updatePositions } = useRequest(
+      (positions) => api.request({ url: 'operations:emUpdatePosition', method: 'POST', data: { positions } }),
+      {
+        manual: true,
+      },
+    );
+
     const { loading, refresh } = useRequest<{ data: { data: DataItem['product'][]; meta: any } }>(
       {
         url: 'operations:emListFeatured',
         params: {
           page: pagination.current,
-          limit: pagination.pageSize,
+          pageSize: pagination.pageSize,
           ...filters,
         },
       },
@@ -230,12 +237,21 @@ export const Featured = withDynamicSchemaProps(
           </Flex>
         </Flex>
 
-        <DragDropProvider onDragEnd={(event) => setItems((data) => move(data, event))}>
+        <DragDropProvider
+          onDragEnd={(event) => {
+            const newItems = move(items, event);
+            setItems(newItems);
+            updatePositions(
+              newItems.map((item, index) => ({ product_id: item.id, position: index + 1, type: 'featured' })),
+            );
+          }}
+        >
           <Table
             rowKey="id"
             columns={colums}
             loading={loading}
             dataSource={items}
+            scroll={{ x: 'max-content' }}
             components={{ body: { row: SortableRow } }}
             pagination={{
               current: pagination.current,
