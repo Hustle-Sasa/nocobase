@@ -78,6 +78,7 @@ export const Featured = withDynamicSchemaProps(
         title: '',
         key: 'drag',
         width: 32,
+
         render: () => <HolderOutlined style={{ cursor: 'grab', color: '#999' }} />,
       },
       {
@@ -93,12 +94,15 @@ export const Featured = withDynamicSchemaProps(
       {
         title: 'Shop Name',
         dataIndex: ['hustle', 'name'],
+        onHeaderCell: () => ({ style: { whiteSpace: 'nowrap' } }),
+        onCell: () => ({ style: { whiteSpace: 'nowrap' } }),
         key: 'hustle.name',
       },
       {
         title: 'Event',
         dataIndex: 'title',
         key: 'title',
+        onCell: () => ({ style: { whiteSpace: 'nowrap' } }),
         render: (_, { title, cover }) => {
           return (
             <>
@@ -122,6 +126,7 @@ export const Featured = withDynamicSchemaProps(
         title: 'Category',
         dataIndex: ['category', 'name'],
         key: 'category.name',
+        onCell: () => ({ style: { whiteSpace: 'nowrap' } }),
       },
       {
         title: 'Country',
@@ -132,6 +137,8 @@ export const Featured = withDynamicSchemaProps(
         title: 'Start Date / Time',
         dataIndex: ['default_extra_details', 'start_date'],
         key: 'start_date',
+        onHeaderCell: () => ({ style: { whiteSpace: 'nowrap' } }),
+        onCell: () => ({ style: { whiteSpace: 'nowrap' } }),
         render: (_, { default_extra_details: { start_date, start_time } }) =>
           handleFormatDateTime(start_date, start_time),
       },
@@ -139,16 +146,21 @@ export const Featured = withDynamicSchemaProps(
         title: 'End Date / Time',
         dataIndex: ['default_extra_details', 'end_date'],
         key: 'end_date',
+        onHeaderCell: () => ({ style: { whiteSpace: 'nowrap' } }),
+        onCell: () => ({ style: { whiteSpace: 'nowrap' } }),
         render: (_, { default_extra_details: { end_date, end_time } }) => handleFormatDateTime(end_date, end_time),
       },
       {
         title: 'Created At',
         dataIndex: 'created_at',
         key: 'created_at',
+        onHeaderCell: () => ({ style: { whiteSpace: 'nowrap' } }),
+        onCell: () => ({ style: { whiteSpace: 'nowrap' } }),
       },
       {
         title: 'Action',
         key: 'action',
+        onCell: () => ({ style: { whiteSpace: 'nowrap' } }),
         render: (_, record) => {
           return (
             <>
@@ -236,6 +248,7 @@ export const Featured = withDynamicSchemaProps(
             columns={colums}
             loading={loading}
             dataSource={items}
+            scroll={{ x: 'max-content' }}
             components={{ body: { row: SortableRow } }}
             pagination={{
               current: pagination.current,

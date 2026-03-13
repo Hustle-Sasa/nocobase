@@ -391,6 +391,23 @@ export class PluginOperationsServer extends Plugin {
 
           await next();
         },
+        countryList: async (ctx, next) => {
+          try {
+            const response = await fetch(`${config.coreApiUrl}/countries`, {
+              headers: {
+                Authorization: `Basic ${credentials}`,
+              },
+            });
+
+            const res = await response.json();
+
+            ctx.body = res?.countries || [];
+          } catch (error: any) {
+            ctx.throw(500, error.message);
+          }
+
+          await next();
+        },
       },
     });
 

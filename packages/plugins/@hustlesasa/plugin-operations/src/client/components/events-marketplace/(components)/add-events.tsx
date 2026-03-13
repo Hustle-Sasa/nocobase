@@ -101,6 +101,7 @@ function AddEvent({
         </Flex>
 
         <Table
+          scroll={{ x: 'max-content' }}
           columns={[
             {
               title: '',

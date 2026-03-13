@@ -33,7 +33,7 @@ export const Events = withDynamicSchemaProps(
         url: 'operations:emRequestList',
         params: {
           page: pagination.current,
-          limit: pagination.pageSize,
+          pageSize: pagination.pageSize,
           ...filters,
         },
       },
@@ -76,6 +76,7 @@ export const Events = withDynamicSchemaProps(
         dataIndex: ['product', 'hustle', 'name'],
         key: 'name',
         onHeaderCell: () => ({ style: { whiteSpace: 'nowrap' } }),
+        onCell: () => ({ style: { whiteSpace: 'nowrap' } }),
       },
       {
         title: 'Event',
