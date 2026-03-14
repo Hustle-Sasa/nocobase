@@ -27,8 +27,6 @@ export class PluginFinanceClient extends Plugin {
 
   // You can get and modify the app instance here
   async load() {
-    console.log(this.app);
-
     this.app.addComponents({
       Withdrawals,
       AccountManager,
