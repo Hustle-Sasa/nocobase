@@ -9,9 +9,6 @@ export class PluginOperationsServer extends Plugin {
     const username = process.env.EXTERNAL_API_USERNAME;
     const password = process.env.EXTERNAL_API_PASSWORD;
     const credentials = btoa(`${username}:${password}`);
-    const marketplaceCredentials = btoa(
-      `${process.env.EXTERNAL_MARKETPLACE_API_USERNAME}:${process.env.EXTERNAL_MARKETPLACE_API_PASSWORD}`,
-    );
 
     const config = {
       coreApiUrl: process.env.EXTERNAL_CORE_API_URL,
@@ -142,7 +139,7 @@ export class PluginOperationsServer extends Plugin {
 
             const response = await fetch(`${config.marketplaceApiUrl}/products?${params.toString()}`, {
               headers: {
-                Authorization: `Basic ${marketplaceCredentials}`,
+                Authorization: `Basic ${credentials}`,
               },
             });
 
@@ -182,7 +179,7 @@ export class PluginOperationsServer extends Plugin {
               `${config.marketplaceApiUrl}/marketplace/backoffice/product-approvals?${params.toString()}`,
               {
                 headers: {
-                  Authorization: `Basic ${marketplaceCredentials}`,
+                  Authorization: `Basic ${credentials}`,
                 },
               },
             );
@@ -216,7 +213,7 @@ export class PluginOperationsServer extends Plugin {
                 method: 'PATCH',
                 body: JSON.stringify({ approved_to_marketplace: true }),
                 headers: {
-                  Authorization: `Basic ${marketplaceCredentials}`,
+                  Authorization: `Basic ${credentials}`,
                   'Content-Type': 'application/json',
                   Accept: 'application/json',
                 },
@@ -248,7 +245,7 @@ export class PluginOperationsServer extends Plugin {
                 method: 'PATCH',
                 body: JSON.stringify({ approved_to_marketplace: false }),
                 headers: {
-                  Authorization: `Basic ${marketplaceCredentials}`,
+                  Authorization: `Basic ${credentials}`,
                   'Content-Type': 'application/json',
                   Accept: 'application/json',
                 },
@@ -282,7 +279,7 @@ export class PluginOperationsServer extends Plugin {
 
             const response = await fetch(`${config.marketplaceApiUrl}/products/banners?${params.toString()}`, {
               headers: {
-                Authorization: `Basic ${marketplaceCredentials}`,
+                Authorization: `Basic ${credentials}`,
               },
             });
 
@@ -313,7 +310,7 @@ export class PluginOperationsServer extends Plugin {
               method: 'POST',
               body: JSON.stringify({ product_ids: event_ids, is_banner: is_banner === 'true' }),
               headers: {
-                Authorization: `Basic ${marketplaceCredentials}`,
+                Authorization: `Basic ${credentials}`,
                 'Content-Type': 'application/json',
                 Accept: 'application/json',
               },
@@ -345,7 +342,7 @@ export class PluginOperationsServer extends Plugin {
 
             const response = await fetch(`${config.marketplaceApiUrl}/products/featured?${params.toString()}`, {
               headers: {
-                Authorization: `Basic ${marketplaceCredentials}`,
+                Authorization: `Basic ${credentials}`,
               },
             });
 
@@ -376,7 +373,7 @@ export class PluginOperationsServer extends Plugin {
               method: 'POST',
               body: JSON.stringify({ product_ids: event_ids, is_featured }),
               headers: {
-                Authorization: `Basic ${marketplaceCredentials}`,
+                Authorization: `Basic ${credentials}`,
                 'Content-Type': 'application/json',
                 Accept: 'application/json',
               },
@@ -405,7 +402,7 @@ export class PluginOperationsServer extends Plugin {
               method: 'POST',
               body: JSON.stringify(positions),
               headers: {
-                Authorization: `Basic ${marketplaceCredentials}`,
+                Authorization: `Basic ${credentials}`,
                 'Content-Type': 'application/json',
                 Accept: 'application/json',
               },
