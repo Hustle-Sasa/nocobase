@@ -14,7 +14,6 @@ export class PluginOperationsServer extends Plugin {
       coreApiUrl: process.env.EXTERNAL_CORE_API_URL,
       servicesApiUrl: process.env.EXTERNAL_SERVICES_API_URL,
       baseDomain: process.env.EXTERNAL_HUSTLESASA_BASE_DOMAIN,
-      marketplaceApiUrl: process.env.EXTERNAL_MARKETPLACE_API_URL,
     };
 
     this.app.resourceManager.define({
@@ -137,7 +136,7 @@ export class PluginOperationsServer extends Plugin {
             if (country) params.append('country', country);
             if (exclude) params.append('exclude', exclude);
 
-            const response = await fetch(`${config.marketplaceApiUrl}/products?${params.toString()}`, {
+            const response = await fetch(`${config.coreApiUrl}/marketplace/products?${params.toString()}`, {
               headers: {
                 Authorization: `Basic ${credentials}`,
               },
@@ -176,7 +175,7 @@ export class PluginOperationsServer extends Plugin {
             if (country) params.append('country', country);
 
             const response = await fetch(
-              `${config.marketplaceApiUrl}/marketplace/backoffice/product-approvals?${params.toString()}`,
+              `${config.coreApiUrl}/marketplace/backoffice/product-approvals?${params.toString()}`,
               {
                 headers: {
                   Authorization: `Basic ${credentials}`,
@@ -208,7 +207,7 @@ export class PluginOperationsServer extends Plugin {
 
           try {
             const response = await fetch(
-              `${config.marketplaceApiUrl}/marketplace/backoffice/product-approvals/${request_id}`,
+              `${config.coreApiUrl}/marketplace/backoffice/product-approvals/${request_id}`,
               {
                 method: 'PATCH',
                 body: JSON.stringify({ approved_to_marketplace: true }),
@@ -240,7 +239,7 @@ export class PluginOperationsServer extends Plugin {
 
           try {
             const response = await fetch(
-              `${config.marketplaceApiUrl}/marketplace/backoffice/product-approvals/${request_id}`,
+              `${config.coreApiUrl}/marketplace/backoffice/product-approvals/${request_id}`,
               {
                 method: 'PATCH',
                 body: JSON.stringify({ approved_to_marketplace: false }),
@@ -277,7 +276,7 @@ export class PluginOperationsServer extends Plugin {
             });
             if (country) params.append('country', country);
 
-            const response = await fetch(`${config.marketplaceApiUrl}/products/banners?${params.toString()}`, {
+            const response = await fetch(`${config.coreApiUrl}/marketplace/products/banners?${params.toString()}`, {
               headers: {
                 Authorization: `Basic ${credentials}`,
               },
@@ -306,7 +305,7 @@ export class PluginOperationsServer extends Plugin {
           const { event_ids, is_banner } = ctx.action?.params || {};
 
           try {
-            const response = await fetch(`${config.marketplaceApiUrl}/marketplace/backoffice/products/banner`, {
+            const response = await fetch(`${config.coreApiUrl}/marketplace/backoffice/products/banner`, {
               method: 'POST',
               body: JSON.stringify({ product_ids: event_ids, is_banner: is_banner === 'true' }),
               headers: {
@@ -340,7 +339,7 @@ export class PluginOperationsServer extends Plugin {
             });
             if (country) params.append('country', country);
 
-            const response = await fetch(`${config.marketplaceApiUrl}/products/featured?${params.toString()}`, {
+            const response = await fetch(`${config.coreApiUrl}/marketplace/products/featured?${params.toString()}`, {
               headers: {
                 Authorization: `Basic ${credentials}`,
               },
@@ -369,7 +368,7 @@ export class PluginOperationsServer extends Plugin {
           const { event_ids, is_featured } = ctx.action?.params || {};
 
           try {
-            const response = await fetch(`${config.marketplaceApiUrl}/marketplace/backoffice/products/featured`, {
+            const response = await fetch(`${config.coreApiUrl}/marketplace/backoffice/products/featured`, {
               method: 'POST',
               body: JSON.stringify({ product_ids: event_ids, is_featured }),
               headers: {
@@ -398,7 +397,7 @@ export class PluginOperationsServer extends Plugin {
           } = ctx.action?.params || {};
 
           try {
-            await fetch(`${config.marketplaceApiUrl}/marketplace/update-position`, {
+            await fetch(`${config.coreApiUrl}/marketplace/update-position`, {
               method: 'POST',
               body: JSON.stringify(positions),
               headers: {
