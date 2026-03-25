@@ -104,7 +104,7 @@ export const Banners = withDynamicSchemaProps(
               display: 'grid',
               listStyle: 'none',
               gridAutoRows: 'minmax(200px, auto)',
-              gridTemplateColumns: `repeat(${cols}, 1fr)`,
+              gridTemplateColumns: `repeat(${cols}, minmax(0,1fr))`,
             }}
           >
             {loading
