@@ -136,8 +136,9 @@ function OrderDetail({ selectedItem }) {
   const isDeveloper =
     Array.isArray(roles) &&
     roles.some((role: any) => {
-      const roleName =
-        typeof role?.name === 'string' ? role.name : typeof role?.title === 'string' ? role.title : undefined;
+      const nameCheck = typeof role?.name === 'string' ? role.name : undefined;
+      const titleCheck = typeof role?.title === 'string' ? role.title : undefined;
+      const roleName = nameCheck || titleCheck;
       return roleName?.toLowerCase() === 'technical';
     });
 

@@ -14,6 +14,7 @@ export const Hustles = withDynamicSchemaProps(
      * state
      */
     const [searchText, setSearchText] = useState('');
+    const [searchByURL, setSearchByURL] = useState('');
     const [selectedItem, setSelectedItem] = useState<DataItem | null>(null);
     const [modalVisible, setModalVisible] = useState(false);
     // Add after existing state declarations
@@ -36,13 +37,14 @@ export const Hustles = withDynamicSchemaProps(
         url: 'hustles:list',
         params: {
           search: searchText,
+          url: searchByURL,
           page: pagination.current,
           pageSize: pagination.pageSize,
         },
       },
       {
         debounceWait: 300,
-        refreshDeps: [searchText, pagination.current, pagination.pageSize],
+        refreshDeps: [searchText, searchByURL, pagination.current, pagination.pageSize],
         onSuccess: (res) => {
           setPagination((prev) => ({
             ...prev,
@@ -182,6 +184,22 @@ export const Hustles = withDynamicSchemaProps(
             style={{ width: '300px' }}
           />
 
+          <Input.Search
+            allowClear
+            placeholder="Search hustle by URL..."
+            value={searchByURL}
+            enterButton={<SearchOutlined />}
+            onChange={(e) => {
+              setSearchByURL(e.target.value);
+              setPagination((prev) => ({
+                ...prev,
+                current: 1,
+              }));
+            }}
+            onPressEnter={handleSearch}
+            style={{ width: '300px' }}
+          />
+
           <Button icon={<ReloadOutlined />} onClick={refresh} loading={loading}>
             Refresh
           </Button>
@@ -216,7 +234,7 @@ export const Hustles = withDynamicSchemaProps(
             setSelectedItem(null);
           }}
         >
-          {selectedItem && <HustleDetailTabs selectedItem={selectedItem} />}
+          {selectedItem && <HustleDetailTabs selectedItem={selectedItem} onClose={() => setModalVisible(false)} />}
         </Drawer>
       </div>
     );

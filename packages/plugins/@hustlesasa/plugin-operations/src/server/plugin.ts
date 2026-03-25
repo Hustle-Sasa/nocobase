@@ -25,8 +25,9 @@ export class PluginOperationsServer extends Plugin {
 
           try {
             // Fetch from external API
+            const searchParam = search ? `&search=${search}` : '';
             const response = await fetch(
-              `${config.coreApiUrl}/TicketManagers?page=${page}&limit=${limit}${search ? `&search=${search}` : ''}`,
+              `${config.coreApiUrl}/TicketManagers?page=${page}&limit=${limit}${searchParam}`,
               {
                 headers: {
                   Authorization: `Basic ${credentials}`,
