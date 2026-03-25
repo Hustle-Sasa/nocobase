@@ -76,6 +76,7 @@ export const Events = withDynamicSchemaProps(
         dataIndex: ['product', 'hustle', 'name'],
         key: 'name',
         onHeaderCell: () => ({ style: { whiteSpace: 'nowrap' } }),
+        onCell: () => ({ style: { whiteSpace: 'nowrap' } }),
       },
       {
         title: 'Event',

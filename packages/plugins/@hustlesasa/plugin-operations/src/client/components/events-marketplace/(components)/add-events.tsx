@@ -23,12 +23,17 @@ function AddEvent({
   onSubmit: (selectedIds: string[], refresh: () => void) => void;
   children: (props: { proceed: () => void }) => React.ReactNode;
 }) {
+  // variables
+  const paginationDefault = { current: 1, pageSize: 15, total: 0 };
+
+  // states
   const [messageApi, contextHolder] = message.useMessage();
   const [open, setOpen] = React.useState(false);
   const [search, setSearch] = React.useState('');
   const [selected, setSelected] = React.useState<string[]>([]);
-  const [pagination, setPagination] = React.useState({ current: 1, pageSize: 15, total: 0 });
+  const [pagination, setPagination] = React.useState(paginationDefault);
 
+  // api
   const {
     data: response,
     loading,
@@ -56,8 +61,16 @@ function AddEvent({
     },
   );
 
-  // variables
   const data = response?.data?.data || [];
+
+  // effect
+  React.useEffect(() => {
+    if (!open) {
+      setSearch('');
+      setSelected([]);
+      setPagination(paginationDefault);
+    }
+  }, [open]);
 
   return (
     <>
