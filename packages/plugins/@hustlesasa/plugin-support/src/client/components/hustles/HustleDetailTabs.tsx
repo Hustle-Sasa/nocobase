@@ -1,7 +1,7 @@
 import React from 'react';
 import { QuestionCircleOutlined } from '@ant-design/icons';
 import { Button, Flex, message, Popconfirm, Tabs, type TabsProps, Typography } from 'antd';
-import { useAPIClient, useRequest } from '@nocobase/client';
+import { useAPIClient, useRequest, useCurrentRoles } from '@nocobase/client';
 
 import HustleDetail from './HustleDetail';
 import Products from './Products';
@@ -9,7 +9,7 @@ import Users from './Users';
 
 const { Title } = Typography;
 
-function HustleDetailTabs({ selectedItem }) {
+function HustleDetailTabs({ selectedItem, onClose }: { selectedItem: any; onClose: () => void }) {
   /**
    * api
    */
@@ -21,8 +21,21 @@ function HustleDetailTabs({ selectedItem }) {
    * constants
    */
   const api = useAPIClient();
+  const roles = useCurrentRoles();
+
+  // console.log(roles);
+
   const [messageApi, contextHolder] = message.useMessage();
   const isApproved = selectedItem.status === 1;
+
+  const hasFinancialAccess =
+    Array.isArray(roles) &&
+    roles.some((role: any) => {
+      const nameCheck = typeof role?.name === 'string' ? role.name : undefined;
+      const titleCheck = typeof role?.title === 'string' ? role.title : undefined;
+      const roleName = nameCheck || titleCheck;
+      return roleName?.toLowerCase() === 'finance';
+    });
 
   const items: TabsProps['items'] = [
     {
@@ -62,7 +75,8 @@ function HustleDetailTabs({ selectedItem }) {
         messageApi.success(response.data.data.message);
       }
     } catch (error) {
-      return;
+      console.error('Failed to suspend account:', error);
+      messageApi.error('Failed to suspend account');
     }
   };
 
@@ -74,19 +88,33 @@ function HustleDetailTabs({ selectedItem }) {
           <Title level={2}>Hustle Details</Title>
         </div>
 
-        {isApproved && (
-          <Popconfirm
-            title="Suspend this shop?"
-            description="Are you sure you want to suspend this shop?"
-            onConfirm={suspendAccount}
-            placement="left"
-            okText="Yes, suspend"
-            cancelText="No"
-            icon={<QuestionCircleOutlined style={{ color: 'red' }} />}
-          >
-            <Button danger>Suspend account</Button>
-          </Popconfirm>
-        )}
+        <Flex gap={8}>
+          {hasFinancialAccess && (
+            <Button
+              type="primary"
+              onClick={() => {
+                onClose();
+                globalThis.location.href = `/admin/rnnllgtopdw?hustleId=${selectedItem.shop_id}`;
+              }}
+            >
+              Visit Account Manager
+            </Button>
+          )}
+
+          {isApproved && (
+            <Popconfirm
+              title="Suspend this shop?"
+              description="Are you sure you want to suspend this shop?"
+              onConfirm={suspendAccount}
+              placement="left"
+              okText="Yes, suspend"
+              cancelText="No"
+              icon={<QuestionCircleOutlined style={{ color: 'red' }} />}
+            >
+              <Button danger>Suspend account</Button>
+            </Popconfirm>
+          )}
+        </Flex>
       </Flex>
       <Tabs defaultActiveKey="details" items={items} />
     </>

@@ -414,15 +414,16 @@ export class PluginSupportServer extends Plugin {
         // List action - get all items
 
         list: async (ctx: any, next) => {
-          const { page = 0, limit = 30, search = '' } = ctx.action.params;
+          const { page = 0, limit = 30, search = '', url = '' } = ctx.action.params;
 
           // Build query parameters
 
           try {
             // Fetch from external API
             const searchParam = search ? `&search=${search}` : '';
+            const urlParam = url ? `&url=${url}` : '';
             const response = await fetch(
-              `${config.coreApiUrl}/getAllHustles?page=${page}&limit=${limit}${searchParam}`,
+              `${config.coreApiUrl}/getAllHustles?page=${page}&limit=${limit}${searchParam}${urlParam}`,
               {
                 headers: {
                   Authorization: `Basic ${credentials}`,
