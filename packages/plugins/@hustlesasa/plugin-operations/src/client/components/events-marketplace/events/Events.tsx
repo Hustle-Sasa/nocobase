@@ -87,10 +87,10 @@ export const Events = withDynamicSchemaProps(
           return (
             <>
               <Image
-                src={cover.url}
-                alt={title}
                 width={32}
+                alt={title}
                 height={32}
+                src={`${cover.cdn_url || cover.url}?w=32&h=32&fit=crop&auto=format`}
                 style={{
                   objectFit: 'cover',
                   objectPosition: 'center',

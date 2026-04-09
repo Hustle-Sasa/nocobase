@@ -94,11 +94,6 @@ export const Featured = withDynamicSchemaProps(
         render: (_, __, index) => (pagination.current - 1) * pagination.pageSize + index + 1,
       },
       {
-        title: 'ID',
-        dataIndex: 'id',
-        key: 'id',
-      },
-      {
         title: 'Shop Name',
         dataIndex: ['hustle', 'name'],
         onHeaderCell: () => ({ style: { whiteSpace: 'nowrap' } }),
@@ -114,10 +109,10 @@ export const Featured = withDynamicSchemaProps(
           return (
             <>
               <Image
-                src={cover.url}
-                alt={title}
                 width={32}
+                alt={title}
                 height={32}
+                src={`${cover.cdn_url || cover.url}?w=32&h=32&fit=crop&auto=format`}
                 style={{
                   objectFit: 'cover',
                   objectPosition: 'center',

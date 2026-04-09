@@ -1,7 +1,7 @@
 import React from 'react';
 import { DeleteFilled, PlusOutlined, ReloadOutlined } from '@ant-design/icons';
 import { useAPIClient, useRequest, withDynamicSchemaProps } from '@nocobase/client';
-import { Card, Flex, message, Modal, Grid, Button, Skeleton } from 'antd';
+import { Card, Flex, message, Modal, Grid, Button, Skeleton, Image } from 'antd';
 import { DragDropProvider } from '@dnd-kit/react';
 import { useSortable } from '@dnd-kit/react/sortable';
 import { move } from '@dnd-kit/helpers';
@@ -215,7 +215,7 @@ function Sortable({
         <img
           alt="cover"
           draggable={false}
-          src={item.cover.url}
+          src={`${item.cover.cdn_url || item.cover.url}?w=384&h=256&fit=crop&auto=format`}
           style={{ height: 256, width: '100%', objectFit: 'cover', objectPosition: 'center' }}
         />
       }

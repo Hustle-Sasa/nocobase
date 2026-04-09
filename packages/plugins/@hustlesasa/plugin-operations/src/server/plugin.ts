@@ -10,10 +10,21 @@ export class PluginOperationsServer extends Plugin {
     const password = process.env.EXTERNAL_API_PASSWORD;
     const credentials = btoa(`${username}:${password}`);
 
+    // temporary config for marketplace training
+    const stagingUsername = process.env.EXTERNAL_STAGING_API_USERNAME;
+    const stagingPassword = process.env.EXTERNAL_STAGING_API_PASSWORD;
+    const stagingCredentials = btoa(`${stagingUsername}:${stagingPassword}`);
+
     const config = {
       coreApiUrl: process.env.EXTERNAL_CORE_API_URL,
       servicesApiUrl: process.env.EXTERNAL_SERVICES_API_URL,
       baseDomain: process.env.EXTERNAL_HUSTLESASA_BASE_DOMAIN,
+    };
+
+    const stagingConfig = {
+      coreApiUrl: process.env.EXTERNAL_STAGING_CORE_API_URL,
+      servicesApiUrl: process.env.EXTERNAL_STAGING_SERVICES_API_URL,
+      baseDomain: process.env.EXTERNAL_STAGING_HUSTLESASA_BASE_DOMAIN,
     };
 
     this.app.resourceManager.define({
@@ -136,9 +147,9 @@ export class PluginOperationsServer extends Plugin {
             if (country) params.append('country', country);
             if (exclude) params.append('exclude', exclude);
 
-            const response = await fetch(`${config.coreApiUrl}/marketplace/products?${params.toString()}`, {
+            const response = await fetch(`${stagingConfig.coreApiUrl}/marketplace/products?${params.toString()}`, {
               headers: {
-                Authorization: `Basic ${credentials}`,
+                Authorization: `Basic ${stagingCredentials}`,
               },
             });
 
@@ -175,10 +186,10 @@ export class PluginOperationsServer extends Plugin {
             if (country) params.append('country', country);
 
             const response = await fetch(
-              `${config.coreApiUrl}/marketplace/backoffice/product-approvals?${params.toString()}`,
+              `${stagingConfig.coreApiUrl}/marketplace/backoffice/product-approvals?${params.toString()}`,
               {
                 headers: {
-                  Authorization: `Basic ${credentials}`,
+                  Authorization: `Basic ${stagingCredentials}`,
                 },
               },
             );
@@ -207,12 +218,12 @@ export class PluginOperationsServer extends Plugin {
 
           try {
             const response = await fetch(
-              `${config.coreApiUrl}/marketplace/backoffice/product-approvals/${request_id}`,
+              `${stagingConfig.coreApiUrl}/marketplace/backoffice/product-approvals/${request_id}`,
               {
                 method: 'PATCH',
                 body: JSON.stringify({ approved_to_marketplace: true }),
                 headers: {
-                  Authorization: `Basic ${credentials}`,
+                  Authorization: `Basic ${stagingCredentials}`,
                   'Content-Type': 'application/json',
                   Accept: 'application/json',
                 },
@@ -239,12 +250,12 @@ export class PluginOperationsServer extends Plugin {
 
           try {
             const response = await fetch(
-              `${config.coreApiUrl}/marketplace/backoffice/product-approvals/${request_id}`,
+              `${stagingConfig.coreApiUrl}/marketplace/backoffice/product-approvals/${request_id}`,
               {
                 method: 'PATCH',
                 body: JSON.stringify({ approved_to_marketplace: false }),
                 headers: {
-                  Authorization: `Basic ${credentials}`,
+                  Authorization: `Basic ${stagingCredentials}`,
                   'Content-Type': 'application/json',
                   Accept: 'application/json',
                 },
@@ -276,11 +287,14 @@ export class PluginOperationsServer extends Plugin {
             });
             if (country) params.append('country', country);
 
-            const response = await fetch(`${config.coreApiUrl}/marketplace/products/banners?${params.toString()}`, {
-              headers: {
-                Authorization: `Basic ${credentials}`,
+            const response = await fetch(
+              `${stagingConfig.coreApiUrl}/marketplace/products/banners?${params.toString()}`,
+              {
+                headers: {
+                  Authorization: `Basic ${stagingCredentials}`,
+                },
               },
-            });
+            );
 
             const res = await response.json();
 
@@ -305,11 +319,11 @@ export class PluginOperationsServer extends Plugin {
           const { event_ids, is_banner } = ctx.action?.params || {};
 
           try {
-            const response = await fetch(`${config.coreApiUrl}/marketplace/backoffice/products/banner`, {
+            const response = await fetch(`${stagingConfig.coreApiUrl}/marketplace/backoffice/products/banner`, {
               method: 'POST',
               body: JSON.stringify({ product_ids: event_ids, is_banner: is_banner === 'true' }),
               headers: {
-                Authorization: `Basic ${credentials}`,
+                Authorization: `Basic ${stagingCredentials}`,
                 'Content-Type': 'application/json',
                 Accept: 'application/json',
               },
@@ -339,11 +353,14 @@ export class PluginOperationsServer extends Plugin {
             });
             if (country) params.append('country', country);
 
-            const response = await fetch(`${config.coreApiUrl}/marketplace/products/featured?${params.toString()}`, {
-              headers: {
-                Authorization: `Basic ${credentials}`,
+            const response = await fetch(
+              `${stagingConfig.coreApiUrl}/marketplace/products/featured?${params.toString()}`,
+              {
+                headers: {
+                  Authorization: `Basic ${stagingCredentials}`,
+                },
               },
-            });
+            );
 
             const res = await response.json();
 
@@ -368,11 +385,11 @@ export class PluginOperationsServer extends Plugin {
           const { event_ids, is_featured } = ctx.action?.params || {};
 
           try {
-            const response = await fetch(`${config.coreApiUrl}/marketplace/backoffice/products/featured`, {
+            const response = await fetch(`${stagingConfig.coreApiUrl}/marketplace/backoffice/products/featured`, {
               method: 'POST',
               body: JSON.stringify({ product_ids: event_ids, is_featured }),
               headers: {
-                Authorization: `Basic ${credentials}`,
+                Authorization: `Basic ${stagingCredentials}`,
                 'Content-Type': 'application/json',
                 Accept: 'application/json',
               },
@@ -393,9 +410,9 @@ export class PluginOperationsServer extends Plugin {
         },
         countryList: async (ctx, next) => {
           try {
-            const response = await fetch(`${config.coreApiUrl}/countries`, {
+            const response = await fetch(`${stagingConfig.coreApiUrl}/countries`, {
               headers: {
-                Authorization: `Basic ${credentials}`,
+                Authorization: `Basic ${stagingCredentials}`,
               },
             });
 
@@ -407,17 +424,42 @@ export class PluginOperationsServer extends Plugin {
           }
           await next();
         },
+        emRemoveProduct: async (ctx, next) => {
+          const { product_id } = ctx.action?.params || {};
+
+          try {
+            const response = await fetch(`${stagingConfig.coreApiUrl}/marketplace/products/${product_id}/remove`, {
+              method: 'DELETE',
+              headers: {
+                Authorization: `Basic ${stagingCredentials}`,
+                Accept: 'application/json',
+              },
+            });
+
+            const res = await response.json();
+
+            if (res.success === true) {
+              ctx.body = { message: res.message };
+            } else {
+              ctx.throw(400, res?.message || 'Failed to remove product');
+            }
+          } catch (error: any) {
+            ctx.throw(500, error?.message);
+          }
+
+          await next();
+        },
         emUpdatePosition: async (ctx, next) => {
           const {
             values: { positions },
           } = ctx.action?.params || {};
 
           try {
-            await fetch(`${config.coreApiUrl}/marketplace/update-position`, {
+            await fetch(`${stagingConfig.coreApiUrl}/marketplace/update-position`, {
               method: 'POST',
               body: JSON.stringify(positions),
               headers: {
-                Authorization: `Basic ${credentials}`,
+                Authorization: `Basic ${stagingCredentials}`,
                 'Content-Type': 'application/json',
                 Accept: 'application/json',
               },
