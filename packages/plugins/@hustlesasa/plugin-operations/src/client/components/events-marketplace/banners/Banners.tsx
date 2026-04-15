@@ -8,8 +8,10 @@ import { move } from '@dnd-kit/helpers';
 
 import { type DataItem } from '../(components)/type';
 import { BlockName } from './constant';
+import CountrySelector from '../(components)/country-selector';
+import EnvironmentSelector from '../(components)/environment-selector';
+import { useEMSettings } from '../(components)/use-em-settings';
 
-const CountrySelector = React.lazy(() => import('../(components)/country-selector'));
 const AddEvent = React.lazy(() => import('../(components)/add-events'));
 const Details = React.lazy(() => import('../(components)/details'));
 
@@ -21,9 +23,11 @@ export const Banners = withDynamicSchemaProps(
     const screens = Grid.useBreakpoint();
     const cols = screens.xl ? 4 : screens.lg ? 3 : screens.sm ? 2 : 1;
 
+    // persistent settings
+    const { country, setCountry, environment, setEnvironment } = useEMSettings();
+
     // states
     const [items, setItems] = React.useState<DataItem['product'][]>([]);
-    const [filters, setFilters] = React.useState<{ country?: string }>({ country: 'KE' });
     const [pagination, setPagination] = React.useState({ current: 1, pageSize: 30, total: 0 });
     const [viewItem, setViewItem] = React.useState<DataItem['product'] | null>(null);
 
@@ -31,7 +35,11 @@ export const Banners = withDynamicSchemaProps(
     const api = useAPIClient();
     const { run: updateBanners, loading: updating } = useRequest(
       (event_ids: string[], is_banner: boolean) =>
-        api.request({ url: 'operations:emUpdateBanners', method: 'POST', params: { event_ids, is_banner } }),
+        api.request({
+          url: 'operations:emUpdateBanners',
+          method: 'POST',
+          params: { event_ids, is_banner, env: environment },
+        }),
       {
         manual: true,
         onSuccess() {
@@ -45,7 +53,13 @@ export const Banners = withDynamicSchemaProps(
     );
 
     const { run: updatePositions } = useRequest(
-      (positions) => api.request({ url: 'operations:emUpdatePosition', method: 'POST', data: { positions } }),
+      (positions) =>
+        api.request({
+          url: 'operations:emUpdatePosition',
+          method: 'POST',
+          data: { positions },
+          params: { env: environment },
+        }),
       {
         manual: true,
       },
@@ -55,14 +69,15 @@ export const Banners = withDynamicSchemaProps(
       {
         url: 'operations:emListBanners',
         params: {
-          ...filters,
+          country,
           page: pagination.current,
           pageSize: pagination.pageSize,
+          env: environment,
         },
       },
       {
         debounceWait: 300,
-        refreshDeps: [pagination.current, pagination.pageSize, filters],
+        refreshDeps: [pagination.current, pagination.pageSize, country, environment],
         onSuccess(res) {
           setItems(res?.data?.data || []);
           setPagination((prev) => ({ ...prev, total: res?.meta?.total || 0 }));
@@ -78,10 +93,8 @@ export const Banners = withDynamicSchemaProps(
         {contextHolder}
 
         <Flex align="center" gap={8}>
-          <CountrySelector
-            value={filters?.country}
-            onChange={(value) => setFilters((prev) => ({ ...prev, country: value }))}
-          />
+          <EnvironmentSelector value={environment} onChange={setEnvironment} />
+          <CountrySelector env={environment} value={country} onChange={setCountry} />
           <Button icon={<ReloadOutlined />} onClick={refresh} loading={loading}>
             Refresh
           </Button>
@@ -131,7 +144,8 @@ export const Banners = withDynamicSchemaProps(
               title="Banner"
               exclude="banners"
               submitting={updating}
-              country={filters?.country}
+              env={environment}
+              country={country}
               onSubmit={(selectedIds, refresh) => {
                 updateBanners(selectedIds, true);
                 refresh();
@@ -156,6 +170,7 @@ export const Banners = withDynamicSchemaProps(
 
         {viewItem && (
           <Details
+            env={environment}
             open={true}
             refresh={refresh}
             onClose={() => setViewItem(null)}

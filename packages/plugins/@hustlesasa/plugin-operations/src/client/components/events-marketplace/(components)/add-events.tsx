@@ -14,10 +14,12 @@ function AddEvent({
   children,
   onSubmit,
   country = 'KE',
+  env,
   submitting = false,
 }: {
   title: string;
   country?: string;
+  env?: string;
   submitting?: boolean;
   exclude: 'banners' | 'featured';
   onSubmit: (selectedIds: string[], refresh: () => void) => void;
@@ -42,6 +44,7 @@ function AddEvent({
     {
       url: 'operations:emListProducts',
       params: {
+        env,
         search,
         country,
         exclude,
@@ -51,7 +54,7 @@ function AddEvent({
     },
     {
       debounceWait: 300,
-      refreshDeps: [search, pagination.current, pagination.pageSize, country],
+      refreshDeps: [search, pagination.current, pagination.pageSize, country, env],
       onSuccess({ data }) {
         setPagination((prev) => ({ ...prev, total: data?.meta?.total || 0 }));
       },
@@ -180,7 +183,7 @@ function AddEvent({
               title: '',
               key: 'view',
               render: (_, record: DataItem['product']) => (
-                <Details request={{ product: record } as DataItem} refresh={() => {}}>
+                <Details env={env} request={{ product: record } as DataItem} refresh={() => {}}>
                   {({ proceed }) => (
                     <Button
                       type="link"

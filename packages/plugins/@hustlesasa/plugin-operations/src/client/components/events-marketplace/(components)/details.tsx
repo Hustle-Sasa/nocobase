@@ -9,11 +9,13 @@ function Details({
   request,
   children,
   refresh,
+  env,
   open: controlledOpen,
   onClose: controlledOnClose,
 }: {
   request: DataItem;
   refresh: () => void;
+  env?: string;
   open?: boolean;
   onClose?: () => void;
   children: (props: { proceed: () => void }) => React.ReactNode;
@@ -57,14 +59,14 @@ function Details({
             <Space>
               {request.approved_to_marketplace === null && (
                 <>
-                  <Reject onSuccess={refresh} request={request}>
+                  <Reject env={env} onSuccess={refresh} request={request}>
                     {({ proceed }) => (
                       <Button danger type="primary" onClick={proceed}>
                         Reject
                       </Button>
                     )}
                   </Reject>
-                  <Approve onSuccess={refresh} request={request}>
+                  <Approve env={env} onSuccess={refresh} request={request}>
                     {({ proceed }) => (
                       <Button block type="primary" onClick={proceed}>
                         Approve
@@ -83,6 +85,7 @@ function Details({
                 </>
               )}
               <Remove
+                env={env}
                 onSuccess={() => {
                   refresh();
                   handleClose();
@@ -170,9 +173,11 @@ function Approve({
   request,
   children,
   onSuccess,
+  env,
 }: {
   request: DataItem;
   onSuccess: () => void;
+  env?: string;
   children: (props: { proceed: () => void }) => React.ReactNode;
 }) {
   // api
@@ -191,6 +196,7 @@ function Approve({
             params: {
               product_id: request.product.id,
               request_id: request.id,
+              env,
             },
           });
           message.success('Event approved for marketplace');
@@ -216,10 +222,12 @@ function Reject({
   request,
   children,
   onSuccess,
+  env,
 }: {
   request: DataItem;
   children: (props: { proceed: () => void }) => React.ReactNode;
   onSuccess: () => void;
+  env?: string;
 }) {
   const api = useAPIClient();
 
@@ -236,6 +244,7 @@ function Reject({
             params: {
               product_id: request.product.id,
               request_id: request.id,
+              env,
             },
           });
           message.success('Event rejected for marketplace');
@@ -261,10 +270,12 @@ function Remove({
   request,
   children,
   onSuccess,
+  env,
 }: {
   request: DataItem;
   children: (props: { proceed: () => void }) => React.ReactNode;
   onSuccess: () => void;
+  env?: string;
 }) {
   const api = useAPIClient();
 
@@ -279,6 +290,7 @@ function Remove({
             method: 'POST',
             params: {
               product_id: request.product.id,
+              env,
             },
           });
           message.success('Event removed from marketplace');

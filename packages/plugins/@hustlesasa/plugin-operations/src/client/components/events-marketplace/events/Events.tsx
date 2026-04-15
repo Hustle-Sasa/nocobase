@@ -7,6 +7,8 @@ import { handleFormatDateTime } from '../../../utls/helper';
 import { type DataItem } from '../(components)/type';
 import { BlockName } from './constant';
 import CountrySelector from '../(components)/country-selector';
+import EnvironmentSelector from '../(components)/environment-selector';
+import { useEMSettings } from '../(components)/use-em-settings';
 
 const Details = React.lazy(() => import('../(components)/details'));
 
@@ -14,9 +16,12 @@ export const Events = withDynamicSchemaProps(
   () => {
     const [messageApi, contextHolder] = message.useMessage();
 
+    // persistent settings
+    const { country, setCountry, environment, setEnvironment } = useEMSettings();
+
     // states
     const [search, setSearch] = React.useState('');
-    const [filters, setFilters] = React.useState<{ status?: string; country?: string }>({ country: 'KE' });
+    const [status, setStatus] = React.useState<string | undefined>(undefined);
     const [pagination, setPagination] = React.useState({
       current: 1,
       pageSize: 15,
@@ -34,12 +39,15 @@ export const Events = withDynamicSchemaProps(
         params: {
           page: pagination.current,
           pageSize: pagination.pageSize,
-          ...filters,
+          search,
+          status,
+          country,
+          env: environment,
         },
       },
       {
         debounceWait: 300,
-        refreshDeps: [search, pagination.current, pagination.pageSize, filters],
+        refreshDeps: [search, pagination.current, pagination.pageSize, status, country, environment],
         onSuccess({ data: { meta } }) {
           setPagination((prev) => ({
             ...prev,
@@ -156,7 +164,7 @@ export const Events = withDynamicSchemaProps(
         title: 'Action',
         key: 'action',
         render: (_, record) => (
-          <Details request={record} refresh={refresh}>
+          <Details env={environment} request={record} refresh={refresh}>
             {({ proceed }) => (
               <Button color="primary" type="link" style={{ color: '#00cc99' }} onClick={proceed}>
                 View Event
@@ -173,12 +181,13 @@ export const Events = withDynamicSchemaProps(
 
         <Flex style={{ marginBottom: 16 }} gap={6} justify="space-between" align="center">
           <Flex align="center" gap={6}>
+            <EnvironmentSelector value={environment} onChange={setEnvironment} />
             <Select
               allowClear
               style={{ width: 300 }}
               placeholder="Filter by status"
-              value={filters?.status}
-              onChange={(value) => setFilters((prev) => ({ ...prev, status: value }))}
+              value={status}
+              onChange={(value) => setStatus(value)}
             >
               {[
                 { value: 'approved', label: 'Approved' },
@@ -190,10 +199,7 @@ export const Events = withDynamicSchemaProps(
                 </Select.Option>
               ))}
             </Select>
-            <CountrySelector
-              value={filters?.country}
-              onChange={(value) => setFilters((prev) => ({ ...prev, country: value }))}
-            />
+            <CountrySelector env={environment} value={country} onChange={setCountry} />
           </Flex>
 
           <Flex align="center" justify="flex" gap={8}>
