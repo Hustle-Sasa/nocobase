@@ -221,12 +221,16 @@ export class PluginOperationsServer extends Plugin {
         },
         emRequestApprove: async (ctx, next) => {
           const { request_id, env } = ctx.action?.params || {};
+          const { categories } = ctx.action?.params?.values || {};
           const { cfg, creds } = resolveEM(env);
 
           try {
             const response = await fetch(`${cfg.coreApiUrl}/marketplace/backoffice/product-approvals/${request_id}`, {
               method: 'PATCH',
-              body: JSON.stringify({ approved_to_marketplace: true }),
+              body: JSON.stringify({
+                approved_to_marketplace: true,
+                ...(categories ? { categories } : {}),
+              }),
               headers: {
                 Authorization: `Basic ${creds}`,
                 'Content-Type': 'application/json',
@@ -245,6 +249,25 @@ export class PluginOperationsServer extends Plugin {
             }
           } catch (error: any) {
             ctx.throw(404, error?.message);
+          }
+
+          await next();
+        },
+        emListCategories: async (ctx, next) => {
+          const { env } = ctx.action?.params || {};
+          const { cfg, creds } = resolveEM(env);
+
+          try {
+            const params = new URLSearchParams({ page: '1', limit: '100' });
+
+            const response = await fetch(`${cfg.coreApiUrl}/marketplace/categories?${params.toString()}`, {
+              headers: { Authorization: `Basic ${creds}` },
+            });
+
+            const res = await response.json();
+            ctx.body = res?.data;
+          } catch (error: any) {
+            ctx.throw(500, error.message);
           }
 
           await next();

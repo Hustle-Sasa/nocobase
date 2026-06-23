@@ -20,6 +20,7 @@ export interface DataItem {
     category: { id: string; name: string };
     custom_fields: { [x: string]: any }[];
     related_products: string[];
+    marketplace_categories?: { id: string; title: string; slug: string }[];
     hustle: { id: string; name: string };
   };
 }
