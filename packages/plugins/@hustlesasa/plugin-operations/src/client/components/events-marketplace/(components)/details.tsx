@@ -9,11 +9,13 @@ function Details({
   request,
   children,
   refresh,
+  env,
   open: controlledOpen,
   onClose: controlledOnClose,
 }: {
   request: DataItem;
   refresh: () => void;
+  env?: string;
   open?: boolean;
   onClose?: () => void;
   children: (props: { proceed: () => void }) => React.ReactNode;
@@ -54,24 +56,24 @@ function Details({
           onClose={handleClose}
           width={typeof window !== 'undefined' && window.innerWidth >= 992 ? '50%' : '100%'}
           extra={
-            <>
+            <Space>
               {request.approved_to_marketplace === null && (
-                <Space>
-                  <Reject onSuccess={refresh} request={request}>
+                <>
+                  <Reject env={env} onSuccess={refresh} request={request}>
                     {({ proceed }) => (
                       <Button danger type="primary" onClick={proceed}>
                         Reject
                       </Button>
                     )}
                   </Reject>
-                  <Approve onSuccess={refresh} request={request}>
+                  <Approve env={env} onSuccess={refresh} request={request}>
                     {({ proceed }) => (
                       <Button block type="primary" onClick={proceed}>
                         Approve
                       </Button>
                     )}
                   </Approve>
-                </Space>
+                </>
               )}
               {request.approved_to_marketplace !== null && (
                 <>
@@ -82,14 +84,28 @@ function Details({
                   )}
                 </>
               )}
-            </>
+              <Remove
+                env={env}
+                onSuccess={() => {
+                  refresh();
+                  handleClose();
+                }}
+                request={request}
+              >
+                {({ proceed }) => (
+                  <Button danger onClick={proceed}>
+                    Remove from marketplace
+                  </Button>
+                )}
+              </Remove>
+            </Space>
           }
         >
           <Flex gap={24} vertical>
             <Image
               height={384}
               width="100%"
-              src={product.cover.url}
+              src={`${product.cover.cdn_url || product.cover.url}?w=384&h=384&fit=max`}
               style={{ objectFit: 'cover', objectPosition: 'center', marginBottom: 24 }}
             />
             <Descriptions
@@ -157,9 +173,11 @@ function Approve({
   request,
   children,
   onSuccess,
+  env,
 }: {
   request: DataItem;
   onSuccess: () => void;
+  env?: string;
   children: (props: { proceed: () => void }) => React.ReactNode;
 }) {
   // api
@@ -178,6 +196,7 @@ function Approve({
             params: {
               product_id: request.product.id,
               request_id: request.id,
+              env,
             },
           });
           message.success('Event approved for marketplace');
@@ -203,10 +222,12 @@ function Reject({
   request,
   children,
   onSuccess,
+  env,
 }: {
   request: DataItem;
   children: (props: { proceed: () => void }) => React.ReactNode;
   onSuccess: () => void;
+  env?: string;
 }) {
   const api = useAPIClient();
 
@@ -223,6 +244,7 @@ function Reject({
             params: {
               product_id: request.product.id,
               request_id: request.id,
+              env,
             },
           });
           message.success('Event rejected for marketplace');
@@ -242,6 +264,52 @@ function Reject({
     });
 
   return <>{children({ proceed: handleReject })}</>;
+}
+
+function Remove({
+  request,
+  children,
+  onSuccess,
+  env,
+}: {
+  request: DataItem;
+  children: (props: { proceed: () => void }) => React.ReactNode;
+  onSuccess: () => void;
+  env?: string;
+}) {
+  const api = useAPIClient();
+
+  const handleRemove = () =>
+    Modal.confirm({
+      title: 'Remove Event from Marketplace',
+      content: 'Are you sure you want to remove this event from the marketplace?',
+      async onOk() {
+        try {
+          await api.request({
+            url: 'operations:emRemoveProduct',
+            method: 'POST',
+            params: {
+              product_id: request.product.id,
+              env,
+            },
+          });
+          message.success('Event removed from marketplace');
+          onSuccess();
+        } catch (error) {
+          message.error('Failed to remove event, try again!');
+        }
+      },
+      okText: 'Yes, Remove',
+      cancelText: 'No, Cancel',
+      footer: (_, { OkBtn, CancelBtn }) => (
+        <>
+          <CancelBtn />
+          <OkBtn />
+        </>
+      ),
+    });
+
+  return <>{children({ proceed: handleRemove })}</>;
 }
 
 export default Details;

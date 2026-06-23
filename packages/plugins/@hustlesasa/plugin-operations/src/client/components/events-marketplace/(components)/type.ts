@@ -56,4 +56,5 @@ interface ExtraDetails {
 interface Image {
   type: string;
   url: string;
+  cdn_url: string;
 }

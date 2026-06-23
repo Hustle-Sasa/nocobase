@@ -10,6 +10,8 @@ import { handleFormatDateTime } from '../../../utls/helper';
 import { type DataItem } from '../(components)/type';
 import { BlockName } from './constant';
 import CountrySelector from '../(components)/country-selector';
+import EnvironmentSelector from '../(components)/environment-selector';
+import { useEMSettings } from '../(components)/use-em-settings';
 
 const AddEvent = React.lazy(() => import('../(components)/add-events'));
 const Details = React.lazy(() => import('../(components)/details'));
@@ -18,9 +20,11 @@ export const Featured = withDynamicSchemaProps(
   () => {
     const [messageApi, contextHolder] = message.useMessage();
 
+    // persistent settings
+    const { country, setCountry, environment, setEnvironment } = useEMSettings();
+
     // states
     const [search, setSearch] = React.useState('');
-    const [filters, setFilters] = React.useState<{ status?: string; country?: string }>({ country: 'KE' });
     const [pagination, setPagination] = React.useState({ current: 1, pageSize: 30, total: 0 });
     const [items, setItems] = React.useState<DataItem['product'][]>([]);
 
@@ -28,7 +32,11 @@ export const Featured = withDynamicSchemaProps(
     const api = useAPIClient();
     const { run: updateFeatured, loading: updating } = useRequest(
       (event_ids: string[], is_featured: boolean) =>
-        api.request({ url: 'operations:emUpdateFeatured', method: 'POST', params: { event_ids, is_featured } }),
+        api.request({
+          url: 'operations:emUpdateFeatured',
+          method: 'POST',
+          params: { event_ids, is_featured, env: environment },
+        }),
       {
         manual: true,
         onSuccess() {
@@ -42,7 +50,13 @@ export const Featured = withDynamicSchemaProps(
     );
 
     const { run: updatePositions } = useRequest(
-      (positions) => api.request({ url: 'operations:emUpdatePosition', method: 'POST', data: { positions } }),
+      (positions) =>
+        api.request({
+          url: 'operations:emUpdatePosition',
+          method: 'POST',
+          data: { positions },
+          params: { env: environment },
+        }),
       {
         manual: true,
       },
@@ -54,12 +68,14 @@ export const Featured = withDynamicSchemaProps(
         params: {
           page: pagination.current,
           pageSize: pagination.pageSize,
-          ...filters,
+          search,
+          country,
+          env: environment,
         },
       },
       {
         debounceWait: 300,
-        refreshDeps: [search, pagination.current, pagination.pageSize, filters],
+        refreshDeps: [search, pagination.current, pagination.pageSize, country, environment],
         onSuccess(res) {
           setItems(res?.data?.data || []);
           setPagination((prev) => ({ ...prev, total: res?.meta?.total || 0 }));
@@ -94,11 +110,6 @@ export const Featured = withDynamicSchemaProps(
         render: (_, __, index) => (pagination.current - 1) * pagination.pageSize + index + 1,
       },
       {
-        title: 'ID',
-        dataIndex: 'id',
-        key: 'id',
-      },
-      {
         title: 'Shop Name',
         dataIndex: ['hustle', 'name'],
         onHeaderCell: () => ({ style: { whiteSpace: 'nowrap' } }),
@@ -114,10 +125,10 @@ export const Featured = withDynamicSchemaProps(
           return (
             <>
               <Image
-                src={cover.url}
-                alt={title}
                 width={32}
+                alt={title}
                 height={32}
+                src={`${cover.cdn_url || cover.url}?w=32&h=32&fit=crop&auto=format`}
                 style={{
                   objectFit: 'cover',
                   objectPosition: 'center',
@@ -171,7 +182,7 @@ export const Featured = withDynamicSchemaProps(
         render: (_, record) => {
           return (
             <>
-              <Details request={{ product: record } as DataItem} refresh={refresh}>
+              <Details env={environment} request={{ product: record } as DataItem} refresh={refresh}>
                 {({ proceed }) => (
                   <Button color="primary" type="link" style={{ color: '#00cc99' }} onClick={proceed}>
                     View Event
@@ -211,10 +222,8 @@ export const Featured = withDynamicSchemaProps(
 
         <Flex style={{ marginBottom: 16 }} gap={6} justify="space-between" align="center">
           <Flex align="center" gap={6}>
-            <CountrySelector
-              value={filters?.country}
-              onChange={(value) => setFilters((prev) => ({ ...prev, country: value }))}
-            />
+            <EnvironmentSelector value={environment} onChange={setEnvironment} />
+            <CountrySelector env={environment} value={country} onChange={setCountry} />
           </Flex>
 
           <Flex align="center" justify="flex" gap={8}>
@@ -234,7 +243,8 @@ export const Featured = withDynamicSchemaProps(
               exclude="featured"
               submitting={updating}
               title="Featured Event"
-              country={filters?.country}
+              env={environment}
+              country={country}
               onSubmit={(selectedIds, refresh) => {
                 updateFeatured(selectedIds, true);
                 refresh();
