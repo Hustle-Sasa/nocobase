@@ -10,7 +10,17 @@ import {
 } from '@ant-design/icons';
 import { useAPIClient } from '@nocobase/client';
 
-function AdditionalActions({ selectedItem }) {
+type AdditionalActionsProps = {
+  selectedItem?: {
+    payment_method_id?: string;
+    status?: string;
+    order_reference?: string;
+    id?: string;
+    total_amount?: string | number;
+  };
+};
+
+function AdditionalActions({ selectedItem }: AdditionalActionsProps) {
   /**
    * api
    */
@@ -28,8 +38,8 @@ function AdditionalActions({ selectedItem }) {
    */
   const isPaystack = selectedItem?.payment_method_id === 'KE_BUYER_PAYSTACK_MOMO_PAYMENT';
   const canShowVerifyPayment = isPaystack && selectedItem?.status === 'PAYMENT_PROCESSING';
-  const canRegenerateTicket = ['PAYMENT_COMPLETED', 'DELIVERED'].includes(selectedItem?.status);
-  const checkoutUrl = `https://purchase.hustlesasa.shop/checkout/${selectedItem.order_reference}`;
+  const canRegenerateTicket = ['PAYMENT_COMPLETED', 'DELIVERED'].includes(selectedItem?.status ?? '');
+  const checkoutUrl = `https://purchase.hustlesasa.shop/checkout/${selectedItem?.order_reference ?? ''}`;
 
   /**
    * methods
@@ -49,8 +59,8 @@ function AdditionalActions({ selectedItem }) {
       if (response?.data?.['data']) {
         message.success('Payment verified');
       }
-    } catch (error) {
-      message.error(error.message || 'Failed to verify payment, try again!');
+    } catch (error: any) {
+      message.error((error && error.message) || 'Failed to verify payment, try again!');
     } finally {
       form.resetFields();
       setVerifyModalOpen(false);
@@ -74,8 +84,8 @@ function AdditionalActions({ selectedItem }) {
         setRegenerate(false);
         message.success('Ticket regenerated!');
       }
-    } catch (error) {
-      message.error('Failed to regenerate ticket');
+    } catch (error: any) {
+      message.error((error && error.message) || 'Failed to regenerate ticket');
     }
   };
 
@@ -109,7 +119,7 @@ function AdditionalActions({ selectedItem }) {
                     type="link"
                     style={{ padding: 0, marginBottom: 0 }}
                     onClick={() => {
-                      navigator.clipboard.writeText(selectedItem.order_reference);
+                      navigator.clipboard.writeText(selectedItem.order_reference ?? '');
                       message.success('Order reference copied');
                     }}
                   >

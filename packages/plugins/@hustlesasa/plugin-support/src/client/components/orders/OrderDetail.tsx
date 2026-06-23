@@ -12,6 +12,7 @@ import PaymentDetails from './PaymentDetails';
 import OrderPayments from './OrderPayments';
 import OrderItems from './OrderItems';
 import RefundForm from './RefundForm';
+import Receipts from './Receipts';
 
 const { Text, Title } = Typography;
 
@@ -119,7 +120,7 @@ export interface Buyer {
   updated_at: string;
 }
 
-function OrderDetail({ selectedItem }) {
+function OrderDetail({ selectedItem }: { selectedItem?: DataItem }) {
   /**
    * state
    */
@@ -139,7 +140,7 @@ function OrderDetail({ selectedItem }) {
       const nameCheck = typeof role?.name === 'string' ? role.name : undefined;
       const titleCheck = typeof role?.title === 'string' ? role.title : undefined;
       const roleName = nameCheck || titleCheck;
-      return roleName?.toLowerCase() === 'technical';
+      return roleName?.toLowerCase() !== 'technical';
     });
 
   /**
@@ -183,6 +184,15 @@ function OrderDetail({ selectedItem }) {
       label: 'Payments',
       children: <OrderPayments order={data.order_reference} status={data?.status} mutate={refresh} />,
     },
+    ...(completedStatus.includes(data?.status)
+      ? [
+          {
+            key: 'receipts',
+            label: 'Receipts',
+            children: <Receipts selectedItem={data} />,
+          },
+        ]
+      : []),
     ...(isDeveloper
       ? [
           {

@@ -44,7 +44,8 @@
     "mysql2": "^3.14.0",
     "pg": "^8.14.1",
     "pg-hstore": "^2.3.4",
-    "pm2": "^6.0.5"
+    "pm2": "^6.0.5",
+    "react-component-export-image": "^1.0.6"
   },
   "devDependencies": {
     "@nocobase/devtools": "1.9.6"
