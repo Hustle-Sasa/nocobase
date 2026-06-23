@@ -1,5 +1,5 @@
 import React from 'react';
-import { Badge, Button, Descriptions, Drawer, Flex, Image, message, Modal, Space, Tag } from 'antd';
+import { Button, Descriptions, Drawer, Flex, Form, Image, message, Modal, Select, Space, Tag } from 'antd';
 import { useAPIClient } from '@nocobase/client';
 
 import { handleFormatDateTime } from '../../../utls/helper';
@@ -123,7 +123,11 @@ function Details({
               items={[
                 { key: '1', label: 'Event Title', children: product.title },
                 { key: '2', label: 'Event Description', children: product.description },
-                { key: '3', label: 'Event Category', children: product?.category?.name || '-' },
+                {
+                  key: '3',
+                  label: 'Event Category',
+                  children: product?.marketplace_categories?.map((i) => i.title)?.join(', ') || '-',
+                },
                 { key: '4', label: 'Event Venue', children: product.default_extra_details.venue },
                 { key: '5', label: 'Event Country', children: product.country },
                 {
@@ -180,42 +184,101 @@ function Approve({
   env?: string;
   children: (props: { proceed: () => void }) => React.ReactNode;
 }) {
-  // api
   const api = useAPIClient();
+  const [open, setOpen] = React.useState(false);
+  const [submitting, setSubmitting] = React.useState(false);
+  const [categories, setCategories] = React.useState<{ id: string; title: string; slug: string }[]>([]);
+  const [categoriesLoading, setCategoriesLoading] = React.useState(false);
+  const [form] = Form.useForm();
 
-  // handler
-  const handleApprove = () =>
-    Modal.confirm({
-      title: 'Approve Event for Marketplace',
-      content: 'Are you sure you want to approve this event for the marketplace?',
-      async onOk() {
-        try {
-          await api.request({
-            url: 'operations:emRequestApprove',
-            method: 'POST',
-            params: {
-              product_id: request.product.id,
-              request_id: request.id,
-              env,
-            },
-          });
-          message.success('Event approved for marketplace');
-          onSuccess();
-        } catch (error) {
-          message.error('Failed to approve event, try again!');
-        }
-      },
-      okText: 'Yes, Approve',
-      cancelText: 'No, Cancel',
-      footer: (_, { OkBtn, CancelBtn }) => (
-        <>
-          <CancelBtn />
-          <OkBtn />
-        </>
-      ),
+  React.useEffect(() => {
+    if (!open) return;
+
+    setCategoriesLoading(true);
+    api
+      .request({
+        url: 'operations:emListCategories',
+        params: { env, country: request.product.country },
+      })
+      .then((res: any) => {
+        setCategories(res?.data?.data || []);
+      })
+      .finally(() => setCategoriesLoading(false));
+
+    form.setFieldsValue({
+      marketplace_categories: (request?.product?.marketplace_categories || []).map((c) => c.id),
     });
+  }, [open]);
 
-  return <>{children({ proceed: handleApprove })}</>;
+  const handleSubmit = async () => {
+    let values: any;
+    try {
+      values = await form.validateFields();
+    } catch {
+      return;
+    }
+
+    setSubmitting(true);
+    try {
+      await api.request({
+        url: 'operations:emRequestApprove',
+        method: 'POST',
+        params: { product_id: request.product.id, request_id: request.id, env },
+        data: { categories: values.marketplace_categories },
+      });
+      message.success('Event approved for marketplace');
+      setOpen(false);
+      onSuccess();
+    } catch {
+      message.error('Failed to approve event, try again!');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  return (
+    <>
+      {children({ proceed: () => setOpen(true) })}
+      <Modal
+        open={open}
+        title="Approve Event for Marketplace"
+        okText="Yes, Approve"
+        cancelText="No, Cancel"
+        onCancel={() => setOpen(false)}
+        confirmLoading={submitting}
+        onOk={handleSubmit}
+        footer={(_, { OkBtn, CancelBtn }) => (
+          <>
+            <CancelBtn />
+            <OkBtn />
+          </>
+        )}
+      >
+        <Form form={form} layout="vertical" style={{ marginTop: 16 }}>
+          <Form.Item
+            name="marketplace_categories"
+            label="Marketplace Categories"
+            rules={[
+              { required: true, message: 'Please select at least 1 category' },
+              {
+                validator: (_, value) =>
+                  !value || value.length <= 3
+                    ? Promise.resolve()
+                    : Promise.reject(new Error('You can select at most 3 categories')),
+              },
+            ]}
+          >
+            <Select
+              mode="multiple"
+              loading={categoriesLoading}
+              placeholder="Select categories"
+              options={categories?.map((c) => ({ label: c.title, value: c.id }))}
+            />
+          </Form.Item>
+        </Form>
+      </Modal>
+    </>
+  );
 }
 
 function Reject({
