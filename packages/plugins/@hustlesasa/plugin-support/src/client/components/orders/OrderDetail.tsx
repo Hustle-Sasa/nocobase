@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
-import { QuestionCircleOutlined } from '@ant-design/icons';
+import { QuestionCircleOutlined, CalendarOutlined } from '@ant-design/icons';
 import { Flex, Tabs, Button, Typography, Popconfirm, message, Skeleton, Divider, Modal, Input, Form } from 'antd';
-import { CalendarOutlined } from '@ant-design/icons';
 import { useAPIClient, useRequest, useCurrentRoles } from '@nocobase/client';
 import type { TabsProps } from 'antd';
 import { format } from 'date-fns';
@@ -10,116 +9,16 @@ import AdditionalActions from './AdditionalActions';
 import CustomerDetails from './CustomerDetails';
 import PaymentDetails from './PaymentDetails';
 import OrderPayments from './OrderPayments';
+import type { DataItem } from './type';
 import OrderItems from './OrderItems';
 import RefundForm from './RefundForm';
+import Receipts from './Receipts';
+
+export type { DataItem, OrderItem, ProductCover, ProductBannerAsset, ExtraDetails, Buyer } from './type';
 
 const { Text, Title } = Typography;
 
-export interface DataItem {
-  id: number;
-  order_reference: string;
-  coupon_code: any;
-  coupon_code_id: any;
-  affiliate_id: any;
-  affiliate_commission: any;
-  currency: string;
-  sub_total: string;
-  service_fee: string;
-  address_label: any;
-  vat_amount: any;
-  vat_percentage: any;
-  commission_amount: any;
-  commission_percentage: any;
-  discount_amount: string;
-  delivery_amount: string;
-  total_amount: string;
-  delivery_address: string;
-  delivery_address_apartment_number: any;
-  delivery_notes: string;
-  status: string;
-  hustle_ids: number[];
-  hustle_fcm_token: any;
-  payment_method_id: string;
-  payment_method_name: string;
-  payer_phone: string;
-  payer_email: string;
-  buyer_id: number;
-  inventory_reservation_id: string;
-  inventory_claimed_at: string;
-  customer_id: any;
-  created_at: string;
-  updated_at: string;
-  payment_completed_at: string;
-  payment_failed_at: any;
-  payment_failed_reason: any;
-  payment_transaction_reference: string;
-  trace_id: string;
-  shipped_at: any;
-  delivered_at: string;
-  cancelled_at: any;
-  order_type: string;
-  order_items: OrderItem[];
-  buyer: Buyer;
-}
-
-export interface OrderItem {
-  id: number;
-  product_id: string;
-  product_name: string;
-  product_variant_id: string;
-  product_variant_name: string;
-  product_type: string;
-  product_cover: ProductCover;
-  product_banner_assets: ProductBannerAsset[];
-  product_variant_banner_assets: any[];
-  product_store_id: string;
-  product_store_name: string;
-  product_account_id: string;
-  extra_details: ExtraDetails;
-  quantity: number;
-  unit_price: string;
-  line_total: string;
-  order_id: number;
-  created_at: string;
-  updated_at: string;
-}
-
-export interface ProductCover {
-  url: string;
-  file: string;
-  type: string;
-}
-
-export interface ProductBannerAsset {
-  url: string;
-  file: string;
-  type: string;
-}
-
-export interface ExtraDetails {
-  type: string;
-  venue: string;
-  end_date: string;
-  end_time: string;
-  start_date: string;
-  start_time: string;
-  coordinates: string;
-  no_per_purchase: number;
-  is_complimentary: boolean;
-}
-
-export interface Buyer {
-  id: number;
-  full_name: string;
-  phone: string;
-  email: string;
-  address: any;
-  hustle_ids: number[];
-  created_at: string;
-  updated_at: string;
-}
-
-function OrderDetail({ selectedItem }) {
+function OrderDetail({ selectedItem }: { selectedItem?: DataItem }) {
   /**
    * state
    */
@@ -151,7 +50,7 @@ function OrderDetail({ selectedItem }) {
     data: response,
     loading,
     refresh,
-  } = useRequest<{ data: DataItem }>(
+  } = useRequest<{ data: { data: DataItem } }>(
     {
       url: `orders:get/${id}`,
       params: { id },
@@ -164,7 +63,7 @@ function OrderDetail({ selectedItem }) {
   /**
    * variables
    */
-  const data = response?.data?.['data'] || {};
+  const data = (response?.data?.['data'] || {}) as DataItem;
 
   /**
    * constants
@@ -183,6 +82,15 @@ function OrderDetail({ selectedItem }) {
       label: 'Payments',
       children: <OrderPayments order={data.order_reference} status={data?.status} mutate={refresh} />,
     },
+    ...(completedStatus.includes(data?.status)
+      ? [
+          {
+            key: 'order-receipt',
+            label: 'Order Receipt',
+            children: <Receipts selectedItem={data} />,
+          },
+        ]
+      : []),
     ...(isDeveloper
       ? [
           {
@@ -198,7 +106,7 @@ function OrderDetail({ selectedItem }) {
    * methods
    */
 
-  const cancelOrder = async (id: number) => {
+  const cancelOrder = async (id: string) => {
     try {
       const response = await api.request({
         url: `orders:delete/${id}`,
@@ -317,7 +225,7 @@ function OrderDetail({ selectedItem }) {
   );
 }
 
-const Detail = ({ selectedItem }) => {
+const Detail = ({ selectedItem }: { selectedItem: DataItem }) => {
   return (
     <Flex vertical gap={24}>
       <OrderItems selectedItem={selectedItem} />

@@ -1,6 +1,7 @@
 // types
 export interface DataItem {
-  id: number;
+  id: string;
+  order_reference?: string;
   coupon_code: any;
   coupon_code_id: any;
   affiliate_id: any;
@@ -36,11 +37,21 @@ export interface DataItem {
   payment_failed_at: any;
   payment_failed_reason: any;
   payment_transaction_reference: string;
+  reference_id: any;
+  third_party_reference: any;
   trace_id: string;
   shipped_at: any;
   delivered_at: string;
   cancelled_at: any;
   order_type: string;
+  hustle_id: number;
+  hustle_name: string;
+  store_custom_fields: any[];
+  checkout_security: boolean;
+  buyer_ip: string;
+  transferred_at: any;
+  transfer_metadata: any[];
+  source: string;
   order_items: OrderItem[];
   buyer: Buyer;
 }
@@ -62,21 +73,25 @@ export interface OrderItem {
   quantity: number;
   unit_price: string;
   line_total: string;
-  order_id: number;
+  order_id: string;
   created_at: string;
   updated_at: string;
+  reference_id: any;
+  product_custom_fields: any[];
 }
 
 export interface ProductCover {
   url: string;
-  file: string;
+  file?: string;
   type: string;
+  cdn_url?: string;
 }
 
 export interface ProductBannerAsset {
   url: string;
-  file: string;
+  file?: string;
   type: string;
+  cdn_url?: string;
 }
 
 export interface ExtraDetails {

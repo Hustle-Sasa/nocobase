@@ -38,7 +38,7 @@ export const Orders = withDynamicSchemaProps(
       data: response,
       loading,
       refresh,
-    } = useRequest<{ data: DataItem[]; meta: any }>(
+    } = useRequest<{ data: { data: DataItem[]; meta: any } }>(
       {
         url: 'orders:list',
         params: {
@@ -70,12 +70,6 @@ export const Orders = withDynamicSchemaProps(
     const data = response?.data?.['data'] || [];
 
     const columns: TableColumnsType<DataItem> = [
-      {
-        title: 'Order ID',
-        dataIndex: 'id',
-        key: 'id',
-        width: 80,
-      },
       {
         title: 'Buyer name',
         dataIndex: 'buyer',
