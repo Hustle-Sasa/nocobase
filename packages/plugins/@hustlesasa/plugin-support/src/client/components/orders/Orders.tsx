@@ -67,7 +67,7 @@ export const Orders = withDynamicSchemaProps(
     /**
      * variables
      */
-    const data = response?.data?.data || [];
+    const data = response?.data?.['data'] || [];
 
     const columns: TableColumnsType<DataItem> = [
       {

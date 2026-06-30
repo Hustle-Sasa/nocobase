@@ -1,9 +1,10 @@
 import React from 'react';
-
 import { Card, Divider, Flex } from 'antd';
 import { CreditCardOutlined } from '@ant-design/icons';
 
-function PaymentDetails({ selectedItem }) {
+import type { DataItem } from './type';
+
+function PaymentDetails({ selectedItem }: { selectedItem: DataItem }) {
   return (
     <Card title="Payment details">
       <p>
