@@ -74,7 +74,7 @@ function OrderDetail({ selectedItem }: { selectedItem?: DataItem }) {
   const items: TabsProps['items'] = [
     {
       key: 'order-details',
-      label: 'Order Details',
+      label: 'Details',
       children: <Detail selectedItem={data} />,
     },
     {
@@ -86,7 +86,7 @@ function OrderDetail({ selectedItem }: { selectedItem?: DataItem }) {
       ? [
           {
             key: 'order-receipt',
-            label: 'Order Receipt',
+            label: 'Receipt',
             children: <Receipts selectedItem={data} />,
           },
         ]

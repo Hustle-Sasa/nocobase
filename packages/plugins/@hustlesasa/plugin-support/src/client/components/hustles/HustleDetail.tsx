@@ -5,25 +5,31 @@ import { useRequest } from '@nocobase/client';
 
 const { Text, Title, Link } = Typography;
 
-function HustleDetail({ selectedItem }) {
+interface HustleDetailProps {
+  selectedItem: { shop_id: string };
+}
+
+function HustleDetail({ selectedItem }: HustleDetailProps) {
   /**
    * api
    */
 
   // retrieve env vars
-  const { data } = useRequest({
+  const { data } = useRequest<{ data?: Record<string, any> }>({
     url: 'client-config:get',
   });
-  const { data: response, loading } = useRequest<{ data: [] }>({
+  const { data: response, loading } = useRequest<{ data: { data?: Record<string, any> } }>({
     url: `hustles:get/${selectedItem.shop_id}`,
   });
 
   /**
    * variables
    */
-  const hustle = response?.data?.['data'] || [];
-  const config = data?.['data'];
-  const domain = `https://${hustle.url || ''}${config?.baseDomain}`;
+  const hustle = response?.data?.data || {};
+  const config = data?.data;
+  const host = hustle?.url ? `${hustle.url}${config?.baseDomain || ''}` : config?.baseDomain || '';
+  const domain = host ? `https://${host}` : '';
+  const banners = Array.isArray(hustle?.banner) ? hustle.banner : [];
 
   if (!response && loading) {
     return (
@@ -48,7 +54,7 @@ function HustleDetail({ selectedItem }) {
           <Avatar size={48} alt="shop logo" src={hustle.logo || ''} />
           <Flex vertical gap={4}>
             <Text>{hustle.title}</Text>
-            <a href={`https://${hustle.url || ''}${domain}`} target="_blank">
+            <a href={domain} target="_blank" rel="noreferrer">
               {domain}
             </a>
           </Flex>
@@ -83,7 +89,7 @@ function HustleDetail({ selectedItem }) {
           <DescriptionItem
             title="URL"
             content={
-              <a href={domain} target="_blank">
+              <a href={domain} target="_blank" rel="noreferrer">
                 {domain}
               </a>
             }
@@ -147,16 +153,16 @@ function HustleDetail({ selectedItem }) {
           <DescriptionItem title="TikTok" content={hustle?.tiktok || '-'} />
         </Col>
       </Row>
-      {hustle?.banner?.length > 0 && (
+      {banners.length > 0 && (
         <Row>
           <Col span={24}>
             <DescriptionItem
               title="Banners"
               content={
                 <Flex wrap="wrap" gap={16}>
-                  {hustle?.banner?.map((b) => (
+                  {banners.map((b) => (
                     <Image
-                      key={b.id}
+                      key={b?.id ?? b?.url}
                       width={100}
                       height={100}
                       src={b?.url || ''}

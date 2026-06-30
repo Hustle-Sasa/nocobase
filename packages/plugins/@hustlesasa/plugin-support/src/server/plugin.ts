@@ -16,6 +16,137 @@ export class PluginSupportServer extends Plugin {
       baseDomain: process.env.EXTERNAL_HUSTLESASA_BASE_DOMAIN,
     };
 
+    // for customers (buyer app)
+
+    this.app.resourceManager.define({
+      name: 'customers',
+
+      actions: {
+        list: async (ctx, next) => {
+          const {
+            page = 0,
+            limit = 30,
+            search = '',
+            has_downloaded_app,
+            date_from = '',
+            date_to = '',
+          } = ctx.action.params;
+
+          try {
+            const searchParam = search ? `&search=${search}` : '';
+            const downloadedParam = has_downloaded_app === undefined ? '' : `&has_downloaded_app=${has_downloaded_app}`;
+            const dateFromParam = date_from ? `&date_from=${date_from}` : '';
+            const dateToParam = date_to ? `&date_to=${date_to}` : '';
+            const response = await fetch(
+              `${config.servicesApiUrl}/customers/back-office/customers?page=${page}&limit=${limit}${searchParam}${downloadedParam}${dateFromParam}${dateToParam}`,
+              {
+                headers: {
+                  Authorization: `Basic ${credentials}`,
+                },
+              },
+            );
+
+            const res = await response.json();
+
+            if (!res?.data || !Array.isArray(res?.data)) {
+              ctx.body = {
+                data: [],
+                meta: {
+                  count: 0,
+                  total: 0,
+                  page,
+                  pageSize: limit,
+                  totalPages: 0,
+                },
+              };
+              return await next();
+            }
+
+            let meta = res.meta.pagination;
+
+            ctx.body = {
+              data: res.data,
+
+              meta: {
+                count: res.data.length,
+                total: meta?.total_items,
+                page,
+                pageSize: Number.parseInt(limit),
+                totalPages: Math.ceil(meta?.total_items / limit),
+              },
+            };
+          } catch (error: any) {
+            ctx.throw(500, error.message);
+          }
+
+          await next();
+        },
+
+        listOrders: async (ctx: any, next) => {
+          const {
+            page = 1,
+            limit = 30,
+            // search = '',
+            status = '',
+            date_from = '',
+            date_to = '',
+            customer_id = '',
+          } = ctx.action.params;
+
+          try {
+            // const searchParam = search ? `&search=${search}` : '';
+            const statusParam = status ? `&status=${status}` : '';
+            const dateFromParam = date_from ? `&date_from=${date_from}` : '';
+            const dateToParam = date_to ? `&date_to=${date_to}` : '';
+
+            const response = await fetch(
+              `${config.servicesApiUrl}/orders/back-office/customers/${customer_id}/orders?limit=${limit}&page=${page}
+              ${statusParam}
+              ${dateFromParam}${dateToParam}`,
+              {
+                headers: {
+                  Authorization: `Basic ${credentials}`,
+                },
+              },
+            );
+
+            const res = await response.json();
+
+            if (!res?.data) {
+              ctx.body = {
+                data: [],
+                meta: {
+                  count: 0,
+                  total: 0,
+                  page: Number.parseInt(page),
+                  pageSize: Number.parseInt(limit),
+                  totalPages: 0,
+                },
+              };
+              return await next();
+            }
+
+            const meta = res.meta.pagination;
+
+            ctx.body = {
+              data: res.data,
+              meta: {
+                count: res.data.length,
+                total: meta?.total_items,
+                page: Number.parseInt(page),
+                pageSize: Number.parseInt(limit),
+                totalPages: Math.ceil(meta?.total_items / limit),
+              },
+            };
+          } catch (error: any) {
+            ctx.throw(500, error.message);
+          }
+
+          await next();
+        },
+      },
+    });
+
     // for users
 
     this.app.resourceManager.define({
@@ -83,11 +214,11 @@ export class PluginSupportServer extends Plugin {
 
           try {
             // Decide endpoint based on whether we are filtering by a specific order id
+            const searchParam = search ? `&search=${search}` : '';
+            const statusParam = status ? `&status=${status}` : '';
             const requestUrl = id
               ? `${config.servicesApiUrl}/orders/back-office/${id}`
-              : `${config.servicesApiUrl}/orders/back-office?limit=${limit}&page=${page}${
-                  search ? `&search=${search}` : ''
-                }${status ? `&status=${status}` : ''}`;
+              : `${config.servicesApiUrl}/orders/back-office?limit=${limit}&page=${page}${searchParam}${statusParam}`;
 
             const response = await fetch(requestUrl, {
               headers: {
@@ -264,7 +395,7 @@ export class PluginSupportServer extends Plugin {
         },
 
         delete: async (ctx, next) => {
-          const id = ctx.action.params.filterByTk || ctx.params.id;
+          const id = ctx?.action?.params.filterByTk || ctx.params.id;
           try {
             const response = await fetch(`${config.servicesApiUrl}/orders/back-office/cancel-order/${id}`, {
               method: 'DELETE',
@@ -281,7 +412,7 @@ export class PluginSupportServer extends Plugin {
 
             ctx.body = { data: res.data };
           } catch (error: any) {
-            ctx.throw(404, 'Not found');
+            ctx.throw(404, error?.message || 'Not found');
           }
 
           await next();
@@ -305,7 +436,7 @@ export class PluginSupportServer extends Plugin {
               };
             }
           } catch (error: any) {
-            ctx.throw(404, 'Not found');
+            ctx.throw(404, error?.message || 'Not found');
           }
           await next();
         },
@@ -813,6 +944,7 @@ export class PluginSupportServer extends Plugin {
     });
 
     // Allow public access
+    this.app.acl.allow('customers', '*', 'loggedIn');
     this.app.acl.allow('user', '*', 'loggedIn');
     this.app.acl.allow('orders', '*', 'loggedIn');
     this.app.acl.allow('bookings', '*', 'loggedIn');

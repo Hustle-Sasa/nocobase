@@ -7,17 +7,24 @@ import type { DataItem } from './OrderDetail';
 import ReceiptContent from './(components)/receipt-content';
 
 function Receipts({ selectedItem }: { selectedItem?: DataItem }) {
+  /**
+   * state
+   */
   const receiptRef = useRef<HTMLDivElement>(null);
 
+  /**
+   * variables
+   */
   const shop_id = selectedItem?.hustle_ids?.[0];
 
+  /**
+   * apis
+   */
   const { data: response } = useRequest<{ data: any }>({
     url: `orders:getHustle/${shop_id}`,
   });
 
   const hustle = response?.data?.['data'] ?? {};
-
-  console.log(hustle);
 
   const downloadReceipt = async () => {
     if (!selectedItem) {
