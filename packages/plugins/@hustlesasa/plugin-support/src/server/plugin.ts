@@ -11,10 +11,20 @@ export class PluginSupportServer extends Plugin {
     const credentials = btoa(`${username}:${password}`);
 
     const config = {
+      // staging (hustlesasa.co) — matches EXTERNAL_*_API_URL env vars
       coreApiUrl: process.env.EXTERNAL_CORE_API_URL,
       servicesApiUrl: process.env.EXTERNAL_SERVICES_API_URL,
+      // production (millennialhustler.shop)
+      productionCoreApiUrl: process.env.EXTERNAL_PRODUCTION_CORE_API_URL ?? 'https://millennialhustler.shop',
+      productionServicesApiUrl:
+        process.env.EXTERNAL_PRODUCTION_SERVICES_API_URL ?? 'https://services.millennialhustler.shop',
       baseDomain: process.env.EXTERNAL_HUSTLESASA_BASE_DOMAIN,
     };
+
+    const resolveUrls = (env?: string) =>
+      env === 'staging'
+        ? { coreApiUrl: config.coreApiUrl, servicesApiUrl: config.servicesApiUrl }
+        : { coreApiUrl: config.productionCoreApiUrl, servicesApiUrl: config.productionServicesApiUrl };
 
     // for customers (buyer app)
 
@@ -30,21 +40,23 @@ export class PluginSupportServer extends Plugin {
             has_downloaded_app,
             date_from = '',
             date_to = '',
+            env,
           } = ctx.action.params;
+
+          const { servicesApiUrl } = resolveUrls(env);
 
           try {
             const searchParam = search ? `&search=${search}` : '';
             const downloadedParam = has_downloaded_app === undefined ? '' : `&has_downloaded_app=${has_downloaded_app}`;
             const dateFromParam = date_from ? `&date_from=${date_from}` : '';
             const dateToParam = date_to ? `&date_to=${date_to}` : '';
-            const response = await fetch(
-              `${config.servicesApiUrl}/customers/back-office/customers?page=${page}&limit=${limit}${searchParam}${downloadedParam}${dateFromParam}${dateToParam}`,
-              {
-                headers: {
-                  Authorization: `Basic ${credentials}`,
-                },
+            const requestUrl = `${servicesApiUrl}/customers/back-office/customers?page=${page}&limit=${limit}${searchParam}${downloadedParam}${dateFromParam}${dateToParam}`;
+            console.log('[customers:list] env=%s url=%s', env, requestUrl);
+            const response = await fetch(requestUrl, {
+              headers: {
+                Authorization: `Basic ${credentials}`,
               },
-            );
+            });
 
             const res = await response.json();
 
@@ -91,24 +103,23 @@ export class PluginSupportServer extends Plugin {
             date_from = '',
             date_to = '',
             customer_id = '',
+            env,
           } = ctx.action.params;
+
+          const { servicesApiUrl } = resolveUrls(env);
 
           try {
             // const searchParam = search ? `&search=${search}` : '';
             const statusParam = status ? `&status=${status}` : '';
             const dateFromParam = date_from ? `&date_from=${date_from}` : '';
             const dateToParam = date_to ? `&date_to=${date_to}` : '';
-
-            const response = await fetch(
-              `${config.servicesApiUrl}/orders/back-office/customers/${customer_id}/orders?limit=${limit}&page=${page}
-              ${statusParam}
-              ${dateFromParam}${dateToParam}`,
-              {
-                headers: {
-                  Authorization: `Basic ${credentials}`,
-                },
+            const ordersUrl = `${servicesApiUrl}/orders/back-office/customers/${customer_id}/orders?limit=${limit}&page=${page}${statusParam}${dateFromParam}${dateToParam}`;
+            console.log('[customers:listOrders] env=%s url=%s', env, ordersUrl);
+            const response = await fetch(ordersUrl, {
+              headers: {
+                Authorization: `Basic ${credentials}`,
               },
-            );
+            });
 
             const res = await response.json();
 
@@ -678,6 +689,7 @@ export class PluginSupportServer extends Plugin {
               },
             };
           } catch (error: any) {
+            console.error({ error });
             ctx.throw(404, 'Products Not found');
           }
           await next();
@@ -691,29 +703,28 @@ export class PluginSupportServer extends Plugin {
             ctx.throw(400, 'Account is required');
           }
 
-          try {
-            // Fetch from external API
-            const response = await fetch(`${config.coreApiUrl}/account/users/${account}`, {
-              headers: {
-                Authorization: `Basic ${credentials}`,
-              },
-            });
+          const response = await fetch(`${config.coreApiUrl}/account/users/${account}`, {
+            headers: {
+              Authorization: `Basic ${credentials}`,
+            },
+          });
 
-            let res = await response.json();
-
-            // Ensure data exists and is an array
-            if (!res?.profile) {
-              ctx.body = {
-                data: [],
-              };
-
-              return await next();
-            }
-
-            ctx.body = { data: res.profile };
-          } catch (error: any) {
-            ctx.throw(404, 'Users Not found');
+          if (!response.ok) {
+            ctx.throw(response.status, response.statusText || 'Users not found');
           }
+
+          const res = await response.json();
+
+          // Ensure data exists and is an array
+          if (!res?.profile) {
+            ctx.body = {
+              data: [],
+            };
+
+            return await next();
+          }
+
+          ctx.body = { data: res.profile };
           await next();
         },
 
@@ -887,6 +898,7 @@ export class PluginSupportServer extends Plugin {
               },
             };
           } catch (error: any) {
+            console.error({ error });
             ctx.throw(404, 'Bookings Not found');
           }
           await next();
@@ -925,7 +937,6 @@ export class PluginSupportServer extends Plugin {
             };
           } catch (error: any) {
             console.log(error);
-
             ctx.throw(500, error.message || 'Failed to reschedule booking');
           }
           await next();

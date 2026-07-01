@@ -6,6 +6,7 @@ import type { TableColumnsType } from 'antd';
 import { format } from 'date-fns';
 import type { Dayjs } from 'dayjs';
 
+import { type SupportEnvironment } from '../(shared)/use-environment-settings';
 import { formatMoney, status, statusText } from '../../lib';
 import { DataItem, Buyer } from '../orders/type';
 import { Customer } from './type';
@@ -15,9 +16,10 @@ const { RangePicker } = DatePicker;
 
 interface Props {
   customer: Customer;
+  environment: SupportEnvironment;
 }
 
-const CustomerOrders: React.FC<Props> = ({ customer }) => {
+const CustomerOrders: React.FC<Props> = ({ customer, environment }) => {
   const [searchText, setSearchText] = useState<string | undefined>();
   const [filterStatus, setFilterStatus] = useState<string | undefined>();
   const [dateRange, setDateRange] = useState<[Dayjs | null, Dayjs | null] | null>(null);
@@ -38,6 +40,7 @@ const CustomerOrders: React.FC<Props> = ({ customer }) => {
         customer_id: customer.id,
         page: pagination.current,
         limit: pagination.pageSize,
+        env: environment,
         // ...(searchText ? { search: searchText } : {}),
         ...(filterStatus ? { status: filterStatus } : {}),
         ...(dateRange?.[0] && dateRange?.[1]
@@ -47,7 +50,8 @@ const CustomerOrders: React.FC<Props> = ({ customer }) => {
     },
     {
       debounceWait: 300,
-      refreshDeps: [pagination.current, pagination.pageSize, filterStatus, dateRange],
+      refreshDeps: [pagination.current, pagination.pageSize, filterStatus, dateRange, environment],
+      onBefore: () => console.log('[customers:listOrders] env=%s customer_id=%s page=%d', environment, customer.id, pagination.current),
       onSuccess: (res) => {
         setPagination((prev) => ({
           ...prev,

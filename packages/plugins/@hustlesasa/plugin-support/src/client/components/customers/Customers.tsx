@@ -6,11 +6,14 @@ import { ReloadOutlined, SearchOutlined } from '@ant-design/icons';
 import { Customer } from './type';
 import CustomerDetail from './CustomerDetail';
 import CustomerOrders from './CustomerOrders';
+import EnvironmentSelector from '../(shared)/EnvironmentSelector';
+import { useEnvironmentSettings } from '../(shared)/use-environment-settings';
 
 export const Customers = () => {
   /**
    * state
    */
+  const { environment, setEnvironment } = useEnvironmentSettings();
   const [search, setSearch] = useState('');
   const [hasDownloadedApp, setHasDownloadedApp] = useState(true);
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
@@ -26,6 +29,14 @@ export const Customers = () => {
   /**
    * api
    */
+
+  const { data: configData } = useRequest<{ data: Record<string, string> }>({ url: 'client-config:get' });
+
+  const resolvedServicesUrl = React.useMemo(() => {
+    const cfg = configData?.data;
+    if (!cfg) return null;
+    return environment === 'staging' ? cfg.servicesApiUrl : cfg.productionServicesApiUrl;
+  }, [configData, environment]);
 
   const {
     data: response,
@@ -44,14 +55,17 @@ export const Customers = () => {
       params: {
         page: pagination.current,
         limit: pagination.pageSize,
+        env: environment,
         ...(search ? { search } : {}),
         ...(hasDownloadedApp ? { has_downloaded_app: hasDownloadedApp } : {}),
       },
     },
     {
       debounceWait: 300,
-      refreshDeps: [pagination.current, pagination.pageSize, search, hasDownloadedApp],
+      refreshDeps: [pagination.current, pagination.pageSize, search, hasDownloadedApp, environment],
+      onBefore: () => console.log('[customers:list] env=%s url=%s page=%d', environment, resolvedServicesUrl, pagination.current),
       onSuccess: (res) => {
+        console.log('[customers:list] result', res);
         setPagination((prev) => ({
           ...prev,
           total: res?.data?.meta?.total || 0,
@@ -162,6 +176,8 @@ export const Customers = () => {
         </Space>
 
         <Space>
+          <EnvironmentSelector value={environment} onChange={setEnvironment} />
+
           <Input.Search
             allowClear
             placeholder="Search by name, email or phone"
@@ -220,7 +236,7 @@ export const Customers = () => {
               {
                 key: 'orders',
                 label: 'Orders',
-                children: <CustomerOrders customer={selectedCustomer} />,
+                children: <CustomerOrders customer={selectedCustomer} environment={environment} />,
               },
             ]}
           />
