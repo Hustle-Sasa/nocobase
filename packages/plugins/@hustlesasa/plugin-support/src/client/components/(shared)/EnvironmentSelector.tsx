@@ -12,8 +12,8 @@ function EnvironmentSelector({
 }) {
   return (
     <Select value={value} onChange={onChange} style={{ width: 140 }}>
-      <Select.Option value="production">Production</Select.Option>
       <Select.Option value="staging">Staging</Select.Option>
+      <Select.Option value="production">Production</Select.Option>
     </Select>
   );
 }

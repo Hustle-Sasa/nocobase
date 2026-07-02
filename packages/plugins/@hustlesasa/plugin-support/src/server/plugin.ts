@@ -10,21 +10,24 @@ export class PluginSupportServer extends Plugin {
     const password = process.env.EXTERNAL_API_PASSWORD;
     const credentials = btoa(`${username}:${password}`);
 
+    const stagingUsername = process.env.EXTERNAL_STAGING_API_USERNAME;
+    const stagingPassword = process.env.EXTERNAL_STAGING_API_PASSWORD;
+    const stagingCredentials = btoa(`${stagingUsername}:${stagingPassword}`);
+
     const config = {
-      // staging (hustlesasa.co) — matches EXTERNAL_*_API_URL env vars
       coreApiUrl: process.env.EXTERNAL_CORE_API_URL,
       servicesApiUrl: process.env.EXTERNAL_SERVICES_API_URL,
-      // production (millennialhustler.shop)
-      productionCoreApiUrl: process.env.EXTERNAL_PRODUCTION_CORE_API_URL ?? 'https://millennialhustler.shop',
-      productionServicesApiUrl:
-        process.env.EXTERNAL_PRODUCTION_SERVICES_API_URL ?? 'https://services.millennialhustler.shop',
       baseDomain: process.env.EXTERNAL_HUSTLESASA_BASE_DOMAIN,
     };
 
-    const resolveUrls = (env?: string) =>
-      env === 'staging'
-        ? { coreApiUrl: config.coreApiUrl, servicesApiUrl: config.servicesApiUrl }
-        : { coreApiUrl: config.productionCoreApiUrl, servicesApiUrl: config.productionServicesApiUrl };
+    const stagingConfig = {
+      coreApiUrl: process.env.EXTERNAL_STAGING_CORE_API_URL,
+      servicesApiUrl: process.env.EXTERNAL_STAGING_SERVICES_API_URL,
+      baseDomain: process.env.EXTERNAL_STAGING_HUSTLESASA_BASE_DOMAIN,
+    };
+
+    const resolveEnv = (env?: string) =>
+      env === 'production' ? { cfg: config, creds: credentials } : { cfg: stagingConfig, creds: stagingCredentials };
 
     // for customers (buyer app)
 
@@ -43,18 +46,17 @@ export class PluginSupportServer extends Plugin {
             env,
           } = ctx.action.params;
 
-          const { servicesApiUrl } = resolveUrls(env);
+          const { cfg, creds } = resolveEnv(env);
 
           try {
             const searchParam = search ? `&search=${search}` : '';
             const downloadedParam = has_downloaded_app === undefined ? '' : `&has_downloaded_app=${has_downloaded_app}`;
             const dateFromParam = date_from ? `&date_from=${date_from}` : '';
             const dateToParam = date_to ? `&date_to=${date_to}` : '';
-            const requestUrl = `${servicesApiUrl}/customers/back-office/customers?page=${page}&limit=${limit}${searchParam}${downloadedParam}${dateFromParam}${dateToParam}`;
-            console.log('[customers:list] env=%s url=%s', env, requestUrl);
+            const requestUrl = `${cfg.servicesApiUrl}/customers/back-office/customers?page=${page}&limit=${limit}${searchParam}${downloadedParam}${dateFromParam}${dateToParam}`;
             const response = await fetch(requestUrl, {
               headers: {
-                Authorization: `Basic ${credentials}`,
+                Authorization: `Basic ${creds}`,
               },
             });
 
@@ -106,18 +108,17 @@ export class PluginSupportServer extends Plugin {
             env,
           } = ctx.action.params;
 
-          const { servicesApiUrl } = resolveUrls(env);
+          const { cfg, creds } = resolveEnv(env);
 
           try {
             // const searchParam = search ? `&search=${search}` : '';
             const statusParam = status ? `&status=${status}` : '';
             const dateFromParam = date_from ? `&date_from=${date_from}` : '';
             const dateToParam = date_to ? `&date_to=${date_to}` : '';
-            const ordersUrl = `${servicesApiUrl}/orders/back-office/customers/${customer_id}/orders?limit=${limit}&page=${page}${statusParam}${dateFromParam}${dateToParam}`;
-            console.log('[customers:listOrders] env=%s url=%s', env, ordersUrl);
+            const ordersUrl = `${cfg.servicesApiUrl}/orders/back-office/customers/${customer_id}/orders?limit=${limit}&page=${page}${statusParam}${dateFromParam}${dateToParam}`;
             const response = await fetch(ordersUrl, {
               headers: {
-                Authorization: `Basic ${credentials}`,
+                Authorization: `Basic ${creds}`,
               },
             });
 
@@ -539,9 +540,7 @@ export class PluginSupportServer extends Plugin {
 
             ctx.body = { data };
           } catch (error: any) {
-            console.log({ error });
-
-            ctx.throw(404, 'Not found');
+            ctx.throw(404, error?.message || 'Not found');
           }
 
           await next();
@@ -633,9 +632,7 @@ export class PluginSupportServer extends Plugin {
 
             ctx.body = { data };
           } catch (error: any) {
-            console.log({ error });
-
-            ctx.throw(404, 'Not found');
+            ctx.throw(404, error?.message || 'Not found');
           }
 
           await next();
@@ -936,7 +933,6 @@ export class PluginSupportServer extends Plugin {
               data: res,
             };
           } catch (error: any) {
-            console.log(error);
             ctx.throw(500, error.message || 'Failed to reschedule booking');
           }
           await next();
@@ -949,7 +945,11 @@ export class PluginSupportServer extends Plugin {
 
       actions: {
         get: (ctx) => {
-          ctx.body = config;
+          ctx.body = {
+            ...config,
+            stagingServicesApiUrl: stagingConfig.servicesApiUrl,
+            stagingCoreApiUrl: stagingConfig.coreApiUrl,
+          };
         },
       },
     });

@@ -6,8 +6,8 @@ export type SupportEnvironment = 'production' | 'staging';
 
 export function useEnvironmentSettings() {
   const [environment, setEnvironmentState] = React.useState<SupportEnvironment>(() => {
-    if (typeof window === 'undefined') return 'production';
-    return (localStorage.getItem(ENV_KEY) as SupportEnvironment) || 'production';
+    if (typeof window === 'undefined') return 'staging';
+    return (localStorage.getItem(ENV_KEY) as SupportEnvironment) || 'staging';
   });
 
   const setEnvironment = React.useCallback((value: SupportEnvironment) => {

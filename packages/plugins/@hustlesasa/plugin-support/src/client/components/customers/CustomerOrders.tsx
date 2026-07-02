@@ -9,6 +9,7 @@ import type { Dayjs } from 'dayjs';
 import { type SupportEnvironment } from '../(shared)/use-environment-settings';
 import { formatMoney, status, statusText } from '../../lib';
 import { DataItem, Buyer } from '../orders/type';
+import { ORDERS_PAGE_PATH } from '../orders/constant';
 import { Customer } from './type';
 
 const { Option } = Select;
@@ -51,7 +52,6 @@ const CustomerOrders: React.FC<Props> = ({ customer, environment }) => {
     {
       debounceWait: 300,
       refreshDeps: [pagination.current, pagination.pageSize, filterStatus, dateRange, environment],
-      onBefore: () => console.log('[customers:listOrders] env=%s customer_id=%s page=%d', environment, customer.id, pagination.current),
       onSuccess: (res) => {
         setPagination((prev) => ({
           ...prev,
@@ -175,6 +175,12 @@ const CustomerOrders: React.FC<Props> = ({ customer, environment }) => {
         loading={loading}
         size="middle"
         scroll={{ x: 700 }}
+        onRow={(record) => ({
+          onClick: () => {
+            globalThis.location.href = `${ORDERS_PAGE_PATH}?orderId=${record.id}`;
+          },
+          style: { cursor: 'pointer' },
+        })}
         pagination={{
           current: pagination.current,
           pageSize: pagination.pageSize,
