@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useRequest, withDynamicSchemaProps } from '@nocobase/client';
 import { Button, Drawer, Flex, Input, Select, Spin, Table, Tag } from 'antd';
 import { ReloadOutlined, SearchOutlined } from '@ant-design/icons';
@@ -23,12 +23,22 @@ export const Orders = withDynamicSchemaProps(
     const [filterStatus, setFilterStatus] = React.useState<string | undefined>();
     const [selectedItem, setSelectedItem] = useState<DataItem | null>(null);
     const [modalVisible, setModalVisible] = useState(false);
-    // Add after existing state declarations
     const [pagination, setPagination] = useState({
       current: 1,
       pageSize: 40,
       total: 0,
     });
+    const autoOpenOrderId = useRef<string | null>(null);
+
+    useEffect(() => {
+      const params = new URLSearchParams(globalThis.location?.search || '');
+      const orderId = params.get('orderId');
+      if (orderId) {
+        autoOpenOrderId.current = orderId;
+        setSearchOrderId(orderId);
+        setSearchType('orderId');
+      }
+    }, []);
 
     /**
      * api
@@ -57,6 +67,14 @@ export const Orders = withDynamicSchemaProps(
             ...prev,
             total: res?.data?.meta?.total || 0,
           }));
+          if (autoOpenOrderId.current) {
+            const match = (res?.data?.data || []).find((item) => String(item.id) === autoOpenOrderId.current);
+            if (match) {
+              setSelectedItem(match);
+              setModalVisible(true);
+              autoOpenOrderId.current = null;
+            }
+          }
         },
         onError: (error) => {
           console.error('Failed to fetch orders:', error);

@@ -10,11 +10,154 @@ export class PluginSupportServer extends Plugin {
     const password = process.env.EXTERNAL_API_PASSWORD;
     const credentials = btoa(`${username}:${password}`);
 
+    const stagingUsername = process.env.EXTERNAL_STAGING_API_USERNAME;
+    const stagingPassword = process.env.EXTERNAL_STAGING_API_PASSWORD;
+    const stagingCredentials = btoa(`${stagingUsername}:${stagingPassword}`);
+
     const config = {
       coreApiUrl: process.env.EXTERNAL_CORE_API_URL,
       servicesApiUrl: process.env.EXTERNAL_SERVICES_API_URL,
       baseDomain: process.env.EXTERNAL_HUSTLESASA_BASE_DOMAIN,
     };
+
+    const stagingConfig = {
+      coreApiUrl: process.env.EXTERNAL_STAGING_CORE_API_URL,
+      servicesApiUrl: process.env.EXTERNAL_STAGING_SERVICES_API_URL,
+      baseDomain: process.env.EXTERNAL_STAGING_HUSTLESASA_BASE_DOMAIN,
+    };
+
+    const resolveEnv = (env?: string) =>
+      env === 'production' ? { cfg: config, creds: credentials } : { cfg: stagingConfig, creds: stagingCredentials };
+
+    // for customers (buyer app)
+
+    this.app.resourceManager.define({
+      name: 'customers',
+
+      actions: {
+        list: async (ctx, next) => {
+          const {
+            page = 0,
+            limit = 30,
+            search = '',
+            has_downloaded_app,
+            date_from = '',
+            date_to = '',
+            env,
+          } = ctx.action.params;
+
+          const { cfg, creds } = resolveEnv(env);
+
+          try {
+            const searchParam = search ? `&search=${search}` : '';
+            const downloadedParam = has_downloaded_app === undefined ? '' : `&has_downloaded_app=${has_downloaded_app}`;
+            const dateFromParam = date_from ? `&date_from=${date_from}` : '';
+            const dateToParam = date_to ? `&date_to=${date_to}` : '';
+            const requestUrl = `${cfg.servicesApiUrl}/customers/back-office/customers?page=${page}&limit=${limit}${searchParam}${downloadedParam}${dateFromParam}${dateToParam}`;
+            const response = await fetch(requestUrl, {
+              headers: {
+                Authorization: `Basic ${creds}`,
+              },
+            });
+
+            const res = await response.json();
+
+            if (!res?.data || !Array.isArray(res?.data)) {
+              ctx.body = {
+                data: [],
+                meta: {
+                  count: 0,
+                  total: 0,
+                  page,
+                  pageSize: limit,
+                  totalPages: 0,
+                },
+              };
+              return await next();
+            }
+
+            let meta = res.meta.pagination;
+
+            ctx.body = {
+              data: res.data,
+
+              meta: {
+                count: res.data.length,
+                total: meta?.total_items,
+                page,
+                pageSize: Number.parseInt(limit),
+                totalPages: Math.ceil(meta?.total_items / limit),
+              },
+            };
+          } catch (error: any) {
+            ctx.throw(500, error.message);
+          }
+
+          await next();
+        },
+
+        listOrders: async (ctx: any, next) => {
+          const {
+            page = 1,
+            limit = 30,
+            // search = '',
+            status = '',
+            date_from = '',
+            date_to = '',
+            customer_id = '',
+            env,
+          } = ctx.action.params;
+
+          const { cfg, creds } = resolveEnv(env);
+
+          try {
+            // const searchParam = search ? `&search=${search}` : '';
+            const statusParam = status ? `&status=${status}` : '';
+            const dateFromParam = date_from ? `&date_from=${date_from}` : '';
+            const dateToParam = date_to ? `&date_to=${date_to}` : '';
+            const ordersUrl = `${cfg.servicesApiUrl}/orders/back-office/customers/${customer_id}/orders?limit=${limit}&page=${page}${statusParam}${dateFromParam}${dateToParam}`;
+            const response = await fetch(ordersUrl, {
+              headers: {
+                Authorization: `Basic ${creds}`,
+              },
+            });
+
+            const res = await response.json();
+
+            if (!res?.data) {
+              ctx.body = {
+                data: [],
+                meta: {
+                  count: 0,
+                  total: 0,
+                  page: Number.parseInt(page),
+                  pageSize: Number.parseInt(limit),
+                  totalPages: 0,
+                },
+              };
+              return await next();
+            }
+
+            const meta = res.meta.pagination;
+
+            ctx.body = {
+              data: res.data,
+              meta: {
+                count: res.data.length,
+                total: meta?.total_items,
+                page: Number.parseInt(page),
+                pageSize: Number.parseInt(limit),
+                totalPages: Math.ceil(meta?.total_items / limit),
+              },
+            };
+          } catch (error: any) {
+            ctx.throw(500, error.message);
+          }
+
+          await next();
+        },
+      },
+    });
 
     // for users
 
@@ -83,11 +226,11 @@ export class PluginSupportServer extends Plugin {
 
           try {
             // Decide endpoint based on whether we are filtering by a specific order id
+            const searchParam = search ? `&search=${search}` : '';
+            const statusParam = status ? `&status=${status}` : '';
             const requestUrl = id
               ? `${config.servicesApiUrl}/orders/back-office/${id}`
-              : `${config.servicesApiUrl}/orders/back-office?limit=${limit}&page=${page}${
-                  search ? `&search=${search}` : ''
-                }${status ? `&status=${status}` : ''}`;
+              : `${config.servicesApiUrl}/orders/back-office?limit=${limit}&page=${page}${searchParam}${statusParam}`;
 
             const response = await fetch(requestUrl, {
               headers: {
@@ -264,7 +407,7 @@ export class PluginSupportServer extends Plugin {
         },
 
         delete: async (ctx, next) => {
-          const id = ctx.action.params.filterByTk || ctx.params.id;
+          const id = ctx?.action?.params.filterByTk || ctx.params.id;
           try {
             const response = await fetch(`${config.servicesApiUrl}/orders/back-office/cancel-order/${id}`, {
               method: 'DELETE',
@@ -281,7 +424,7 @@ export class PluginSupportServer extends Plugin {
 
             ctx.body = { data: res.data };
           } catch (error: any) {
-            ctx.throw(404, 'Not found');
+            ctx.throw(404, error?.message || 'Not found');
           }
 
           await next();
@@ -305,7 +448,7 @@ export class PluginSupportServer extends Plugin {
               };
             }
           } catch (error: any) {
-            ctx.throw(404, 'Not found');
+            ctx.throw(404, error?.message || 'Not found');
           }
           await next();
         },
@@ -397,9 +540,7 @@ export class PluginSupportServer extends Plugin {
 
             ctx.body = { data };
           } catch (error: any) {
-            console.log({ error });
-
-            ctx.throw(404, 'Not found');
+            ctx.throw(404, error?.message || 'Not found');
           }
 
           await next();
@@ -491,9 +632,7 @@ export class PluginSupportServer extends Plugin {
 
             ctx.body = { data };
           } catch (error: any) {
-            console.log({ error });
-
-            ctx.throw(404, 'Not found');
+            ctx.throw(404, error?.message || 'Not found');
           }
 
           await next();
@@ -547,6 +686,7 @@ export class PluginSupportServer extends Plugin {
               },
             };
           } catch (error: any) {
+            console.error({ error });
             ctx.throw(404, 'Products Not found');
           }
           await next();
@@ -560,29 +700,28 @@ export class PluginSupportServer extends Plugin {
             ctx.throw(400, 'Account is required');
           }
 
-          try {
-            // Fetch from external API
-            const response = await fetch(`${config.coreApiUrl}/account/users/${account}`, {
-              headers: {
-                Authorization: `Basic ${credentials}`,
-              },
-            });
+          const response = await fetch(`${config.coreApiUrl}/account/users/${account}`, {
+            headers: {
+              Authorization: `Basic ${credentials}`,
+            },
+          });
 
-            let res = await response.json();
-
-            // Ensure data exists and is an array
-            if (!res?.profile) {
-              ctx.body = {
-                data: [],
-              };
-
-              return await next();
-            }
-
-            ctx.body = { data: res.profile };
-          } catch (error: any) {
-            ctx.throw(404, 'Users Not found');
+          if (!response.ok) {
+            ctx.throw(response.status, response.statusText || 'Users not found');
           }
+
+          const res = await response.json();
+
+          // Ensure data exists and is an array
+          if (!res?.profile) {
+            ctx.body = {
+              data: [],
+            };
+
+            return await next();
+          }
+
+          ctx.body = { data: res.profile };
           await next();
         },
 
@@ -756,6 +895,7 @@ export class PluginSupportServer extends Plugin {
               },
             };
           } catch (error: any) {
+            console.error({ error });
             ctx.throw(404, 'Bookings Not found');
           }
           await next();
@@ -793,8 +933,6 @@ export class PluginSupportServer extends Plugin {
               data: res,
             };
           } catch (error: any) {
-            console.log(error);
-
             ctx.throw(500, error.message || 'Failed to reschedule booking');
           }
           await next();
@@ -807,12 +945,17 @@ export class PluginSupportServer extends Plugin {
 
       actions: {
         get: (ctx) => {
-          ctx.body = config;
+          ctx.body = {
+            ...config,
+            stagingServicesApiUrl: stagingConfig.servicesApiUrl,
+            stagingCoreApiUrl: stagingConfig.coreApiUrl,
+          };
         },
       },
     });
 
     // Allow public access
+    this.app.acl.allow('customers', '*', 'loggedIn');
     this.app.acl.allow('user', '*', 'loggedIn');
     this.app.acl.allow('orders', '*', 'loggedIn');
     this.app.acl.allow('bookings', '*', 'loggedIn');

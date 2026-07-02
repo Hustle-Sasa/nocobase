@@ -3,12 +3,20 @@ import { Plugin } from '@nocobase/client';
 
 import { MoiBookingsInitializerItem } from './components/bookings/moi/initializer';
 import { MoiBookingsSettings } from './components/bookings/moi/settings';
+import { CustomersInitializerItem } from './components/customers/initializer';
+import { CustomersSettings } from './components/customers/settings';
 import { HustlesInitializerItem } from './components/hustles/initializer';
 import { OrdersInitializerItem } from './components/orders/initializer';
 import { UsersInitializerItem } from './components/users/initializer';
 import { HustlesSettings } from './components/hustles/settings';
 import { OrdersSettings } from './components/orders/settings';
 import { UsersSettings } from './components/users/settings';
+
+const Customers = React.lazy(() =>
+  import('./components/customers/Customers').then((module) => ({
+    default: module.Customers,
+  })),
+);
 
 const Hustles = React.lazy(() =>
   import('./components/hustles/Hustles').then((module) => ({
@@ -44,11 +52,19 @@ export class PluginSupportClient extends Plugin {
   // You can get and modify the app instance here
   async load() {
     this.app.addComponents({
+      Customers,
       Hustles,
       Users,
       Orders,
       MoiBookings,
     });
+
+    this.app.schemaSettingsManager.add(CustomersSettings);
+    this.app.schemaInitializerManager.addItem(
+      'page:addBlock',
+      `otherBlocks.${CustomersInitializerItem.name}`,
+      CustomersInitializerItem,
+    );
 
     this.app.schemaSettingsManager.add(HustlesSettings);
     this.app.schemaInitializerManager.addItem(

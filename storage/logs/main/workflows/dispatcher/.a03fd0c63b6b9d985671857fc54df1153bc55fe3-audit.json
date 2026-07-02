@@ -14,6 +14,16 @@
             "date": 1782839982143,
             "name": "/Users/abi/workspaces/hustle/support-portal/storage/logs/main/workflows/dispatcher/2026-06-30.log",
             "hash": "48ed0bb5f41ef3404b7c6d12e917fb68d0411583b9752817a8dc26766e4e2771"
+        },
+        {
+            "date": 1782885691577,
+            "name": "/Users/abi/workspaces/hustle/support-portal/storage/logs/main/workflows/dispatcher/2026-07-01.log",
+            "hash": "9e00f5efe1d1647e3cbd60a84f84a0ff74fa4b087ffef5d6e172444bfc4e5e68"
+        },
+        {
+            "date": 1782951035143,
+            "name": "/Users/abi/workspaces/hustle/support-portal/storage/logs/main/workflows/dispatcher/2026-07-02.log",
+            "hash": "56f7682e5bf83beec5e90e1c76c120986bcbd6fba441df177962f1b3ddf495d7"
         }
     ],
     "hashType": "sha256"

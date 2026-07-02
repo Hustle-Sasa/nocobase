@@ -10,7 +10,6 @@ export class PluginOperationsServer extends Plugin {
     const password = process.env.EXTERNAL_API_PASSWORD;
     const credentials = btoa(`${username}:${password}`);
 
-    // temporary config for marketplace training
     const stagingUsername = process.env.EXTERNAL_STAGING_API_USERNAME;
     const stagingPassword = process.env.EXTERNAL_STAGING_API_PASSWORD;
     const stagingCredentials = btoa(`${stagingUsername}:${stagingPassword}`);
@@ -27,7 +26,7 @@ export class PluginOperationsServer extends Plugin {
       baseDomain: process.env.EXTERNAL_STAGING_HUSTLESASA_BASE_DOMAIN,
     };
 
-    const resolveEM = (env?: string) =>
+    const resolveEnv = (env?: string) =>
       env === 'production' ? { cfg: config, creds: credentials } : { cfg: stagingConfig, creds: stagingCredentials };
 
     this.app.resourceManager.define({
@@ -140,7 +139,7 @@ export class PluginOperationsServer extends Plugin {
 
         emListProducts: async (ctx, next) => {
           const { page = 0, pageSize = 30, search = '', country, exclude, env } = ctx.action?.params || {};
-          const { cfg, creds } = resolveEM(env);
+          const { cfg, creds } = resolveEnv(env);
 
           try {
             // Fetch from external API
@@ -179,7 +178,7 @@ export class PluginOperationsServer extends Plugin {
 
         emRequestList: async (ctx, next) => {
           const { page = 0, pageSize = 30, search = '', status, country, env } = ctx.action?.params || {};
-          const { cfg, creds } = resolveEM(env);
+          const { cfg, creds } = resolveEnv(env);
 
           try {
             // Fetch from external API
@@ -222,7 +221,7 @@ export class PluginOperationsServer extends Plugin {
         emRequestApprove: async (ctx, next) => {
           const { request_id, env } = ctx.action?.params || {};
           const { categories } = ctx.action?.params?.values || {};
-          const { cfg, creds } = resolveEM(env);
+          const { cfg, creds } = resolveEnv(env);
 
           try {
             const response = await fetch(`${cfg.coreApiUrl}/marketplace/backoffice/product-approvals/${request_id}`, {
@@ -255,7 +254,7 @@ export class PluginOperationsServer extends Plugin {
         },
         emListCategories: async (ctx, next) => {
           const { env } = ctx.action?.params || {};
-          const { cfg, creds } = resolveEM(env);
+          const { cfg, creds } = resolveEnv(env);
 
           try {
             const params = new URLSearchParams({ page: '1', limit: '100' });
@@ -274,7 +273,7 @@ export class PluginOperationsServer extends Plugin {
         },
         emRequestReject: async (ctx, next) => {
           const { request_id, env } = ctx.action?.params || {};
-          const { cfg, creds } = resolveEM(env);
+          const { cfg, creds } = resolveEnv(env);
 
           try {
             const response = await fetch(`${cfg.coreApiUrl}/marketplace/backoffice/product-approvals/${request_id}`, {
@@ -304,7 +303,7 @@ export class PluginOperationsServer extends Plugin {
         },
         emListBanners: async (ctx, next) => {
           const { page = 0, pageSize = 30, country, env } = ctx.action?.params || {};
-          const { cfg, creds } = resolveEM(env);
+          const { cfg, creds } = resolveEnv(env);
 
           try {
             const params = new URLSearchParams({
@@ -340,7 +339,7 @@ export class PluginOperationsServer extends Plugin {
 
         emUpdateBanners: async (ctx, next) => {
           const { event_ids, is_banner, env } = ctx.action?.params || {};
-          const { cfg, creds } = resolveEM(env);
+          const { cfg, creds } = resolveEnv(env);
 
           try {
             const response = await fetch(`${cfg.coreApiUrl}/marketplace/backoffice/products/banner`, {
@@ -369,7 +368,7 @@ export class PluginOperationsServer extends Plugin {
 
         emListFeatured: async (ctx, next) => {
           const { page = 0, pageSize = 30, country, env } = ctx.action?.params || {};
-          const { cfg, creds } = resolveEM(env);
+          const { cfg, creds } = resolveEnv(env);
 
           try {
             const params = new URLSearchParams({
@@ -405,7 +404,7 @@ export class PluginOperationsServer extends Plugin {
 
         emUpdateFeatured: async (ctx, next) => {
           const { event_ids, is_featured, env } = ctx.action?.params || {};
-          const { cfg, creds } = resolveEM(env);
+          const { cfg, creds } = resolveEnv(env);
 
           try {
             const response = await fetch(`${cfg.coreApiUrl}/marketplace/backoffice/products/featured`, {
@@ -433,7 +432,7 @@ export class PluginOperationsServer extends Plugin {
         },
         countryList: async (ctx, next) => {
           const { env } = ctx.action?.params || {};
-          const { cfg, creds } = resolveEM(env);
+          const { cfg, creds } = resolveEnv(env);
 
           try {
             const response = await fetch(`${cfg.coreApiUrl}/countries`, {
@@ -452,7 +451,7 @@ export class PluginOperationsServer extends Plugin {
         },
         emRemoveProduct: async (ctx, next) => {
           const { product_id, env } = ctx.action?.params || {};
-          const { cfg, creds } = resolveEM(env);
+          const { cfg, creds } = resolveEnv(env);
 
           try {
             const response = await fetch(`${cfg.coreApiUrl}/marketplace/backoffice/products/${product_id}/remove`, {
@@ -481,7 +480,7 @@ export class PluginOperationsServer extends Plugin {
           const {
             values: { positions },
           } = ctx.action?.params || {};
-          const { cfg, creds } = resolveEM(env);
+          const { cfg, creds } = resolveEnv(env);
 
           try {
             await fetch(`${cfg.coreApiUrl}/marketplace/update-position`, {

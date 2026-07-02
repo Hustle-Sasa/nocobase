@@ -7,28 +7,34 @@ import type { DataItem } from './OrderDetail';
 import ReceiptContent from './(components)/receipt-content';
 
 function Receipts({ selectedItem }: { selectedItem?: DataItem }) {
+  /**
+   * state
+   */
   const receiptRef = useRef<HTMLDivElement>(null);
 
+  /**
+   * variables
+   */
   const shop_id = selectedItem?.hustle_ids?.[0];
 
+  /**
+   * apis
+   */
   const { data: response } = useRequest<{ data: any }>({
     url: `orders:getHustle/${shop_id}`,
   });
 
   const hustle = response?.data?.['data'] ?? {};
 
-  console.log(hustle);
-
   const downloadReceipt = async () => {
-    if (!selectedItem) {
-      return;
-    }
+    if (!selectedItem || !receiptRef.current) return;
 
-    const { exportComponentAsJPEG } = await import('react-component-export-image');
-
-    exportComponentAsJPEG(receiptRef, {
-      fileName: 'order-receipt',
-    });
+    const { default: html2canvas } = await import('html2canvas');
+    const canvas = await html2canvas(receiptRef.current, { scrollY: -window.scrollY, useCORS: true });
+    const link = document.createElement('a');
+    link.download = 'order-receipt.jpg';
+    link.href = canvas.toDataURL('image/jpeg', 1);
+    link.click();
   };
 
   return (
