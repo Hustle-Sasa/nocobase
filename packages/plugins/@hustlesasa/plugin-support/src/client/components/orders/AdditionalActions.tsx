@@ -5,10 +5,13 @@ import {
   FileExclamationOutlined,
   InfoCircleOutlined,
   LinkOutlined,
+  PhoneOutlined,
   QrcodeOutlined,
   SafetyCertificateOutlined,
 } from '@ant-design/icons';
 import { useAPIClient } from '@nocobase/client';
+
+import ChangePhoneNumberForm from './ChangePhoneNumberForm';
 
 type AdditionalActionsProps = {
   selectedItem?: {
@@ -17,10 +20,13 @@ type AdditionalActionsProps = {
     order_reference?: string;
     id?: string;
     total_amount?: string | number;
+    payer_phone?: string;
+    buyer?: { phone?: string };
   };
+  onUpdated?: () => void;
 };
 
-function AdditionalActions({ selectedItem }: AdditionalActionsProps) {
+function AdditionalActions({ selectedItem, onUpdated }: AdditionalActionsProps) {
   /**
    * api
    */
@@ -32,6 +38,7 @@ function AdditionalActions({ selectedItem }: AdditionalActionsProps) {
   const [form] = Form.useForm();
   const [verifyModalOpen, setVerifyModalOpen] = useState(false);
   const [regenerate, setRegenerate] = useState(false);
+  const [changePhoneOpen, setChangePhoneOpen] = useState(false);
 
   /**
    * constants
@@ -197,6 +204,31 @@ function AdditionalActions({ selectedItem }: AdditionalActionsProps) {
             </Card>
           </>
         )}
+
+        <Card>
+          <Flex gap={16} align="flex-start">
+            <PhoneOutlined style={{ fontSize: 20, color: '#eb2f96', marginTop: 4 }} />
+            <div>
+              <Typography.Title level={4} style={{ marginBottom: 8 }}>
+                Need to change the buyer's phone number?
+              </Typography.Title>
+              <Typography.Paragraph type="secondary" style={{ marginBottom: 12 }}>
+                Update the phone number the ticket was purchased with. Record who requested the change and why.
+              </Typography.Paragraph>
+              <Button type="primary" onClick={() => setChangePhoneOpen(true)}>
+                Change phone number
+              </Button>
+            </div>
+          </Flex>
+
+          <ChangePhoneNumberForm
+            open={changePhoneOpen}
+            ticketId={selectedItem?.order_reference}
+            phoneNumber={selectedItem?.buyer?.phone || selectedItem?.payer_phone}
+            onClose={() => setChangePhoneOpen(false)}
+            onSuccess={onUpdated}
+          />
+        </Card>
 
         {canShowVerifyPayment && (
           <Card>

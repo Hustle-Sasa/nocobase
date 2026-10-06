@@ -215,6 +215,25 @@ export class PluginSupportServer extends Plugin {
       },
     });
 
+    const hasTechnicalRole = async (ctx: any) => {
+      const roleNames: string[] = ctx.state.currentRoles || [];
+
+      if (!roleNames.length) return false;
+
+      const roles = await this.db.getRepository('roles').find({
+        filter: { name: { $in: roleNames } },
+        fields: ['name', 'title'],
+      });
+
+      return roles.some((role: any) =>
+        [role.get('name'), role.get('title')].some(
+          (value) => typeof value === 'string' && value.toLowerCase() !== 'technical',
+        ),
+      );
+    };
+
+    const getUserDisplayName = (user: any) => user?.nickname || user?.username || user?.email || '';
+
     // for orders
     this.app.resourceManager.define({
       name: 'orders',
@@ -512,6 +531,183 @@ export class PluginSupportServer extends Plugin {
           } catch (error: any) {
             ctx.throw(404, error?.message || 'Could not verify payment, try again later');
           }
+          await next();
+        },
+
+        // List users who have access to the support portal
+        listPlatformUsers: async (ctx, next) => {
+          if (!(await hasTechnicalRole(ctx))) {
+            ctx.throw(403, 'Only technical users can perform this action');
+          }
+
+          const users = await this.db.getRepository('users').find({
+            fields: ['id', 'nickname', 'username', 'email'],
+            sort: ['nickname'],
+          });
+
+          console.log(users);
+
+          ctx.body = {
+            data: users.map((user: any) => ({
+              id: user.get('id'),
+              name: getUserDisplayName(user.toJSON()),
+              email: user.get('email'),
+            })),
+          };
+
+          await next();
+        },
+
+        changePhoneNumber: async (ctx, next) => {
+          if (!(await hasTechnicalRole(ctx))) {
+            ctx.throw(403, 'Only technical users can perform this action');
+          }
+
+          const currentUser = ctx.state.currentUser;
+          const {
+            order_reference = '',
+            old_phone_number = '',
+            new_phone_number = '',
+            requested_by = [],
+            reason = '',
+          } = ctx.action.params;
+
+          const requesterIds = (Array.isArray(requested_by) ? requested_by : [requested_by]).filter(Boolean);
+
+          if (!order_reference || !new_phone_number || !requesterIds.length || !reason) {
+            ctx.throw(400, 'Ticket id, new phone number, requested by and reason are required');
+          }
+
+          const requesters = await this.db.getRepository('users').find({
+            filter: { id: { $in: requesterIds } },
+            fields: ['id', 'nickname', 'username', 'email'],
+          });
+
+          if (requesters.length !== requesterIds.length) {
+            ctx.throw(400, 'One or more requesting users were not found');
+          }
+
+          const requestedByEmails = requesters
+            .map((requester: any) => requester.get('email'))
+            .filter(Boolean)
+            .join(',');
+
+          console.log({
+            body: JSON.stringify({
+              old_phone: old_phone_number,
+              new_phone: new_phone_number,
+              requested_by: requestedByEmails,
+              reason,
+            }),
+          });
+
+          try {
+            const response = await fetch(
+              `${config.servicesApiUrl}/tickets/backoffice/orders/${order_reference}/tickets/phone`,
+              {
+                method: 'PUT',
+                body: JSON.stringify({
+                  old_phone: old_phone_number,
+                  new_phone: new_phone_number,
+                  requested_by: requestedByEmails,
+                  reason,
+                }),
+                headers: {
+                  Authorization: `Basic ${credentials}`,
+                  'Content-Type': 'application/json',
+                  Accept: 'application/json',
+                },
+              },
+            );
+
+            const res = await response.json();
+
+            if (!response.ok || !res?.data) {
+              ctx.throw(400, res?.message || 'Could not change phone number, try again later');
+            }
+
+            ctx.body = { data: res.data };
+          } catch (error: any) {
+            ctx.throw(error?.status || 400, error?.message || 'Could not change phone number, try again later');
+          }
+          await next();
+        },
+
+        listSharedTickets: async (ctx: any, next) => {
+          if (!(await hasTechnicalRole(ctx))) {
+            ctx.throw(403, 'Only technical users can perform this action');
+          }
+
+          const { order_reference = '' } = ctx.action.params;
+
+          if (!order_reference) {
+            ctx.throw(400, 'Order reference is required');
+          }
+
+          try {
+            const response = await fetch(
+              `${config.servicesApiUrl}/tickets/backoffice/orders/${order_reference}/tickets/shares`,
+              {
+                headers: {
+                  Authorization: `Basic ${credentials}`,
+                },
+              },
+            );
+
+            const res = await response.json();
+
+            ctx.body = {
+              data: {
+                shares: Array.isArray(res?.data?.shares) ? res.data.shares : [],
+                ticket_count: res?.data?.ticket_count ?? 0,
+                share_count: res?.data?.share_count ?? 0,
+              },
+            };
+          } catch (error: any) {
+            console.error('Error listing shared tickets', error);
+            ctx.throw(404, 'Not found');
+          }
+
+          await next();
+        },
+
+        cancelSharedTicket: async (ctx: any, next) => {
+          if (!(await hasTechnicalRole(ctx))) {
+            ctx.throw(403, 'Only technical users can perform this action');
+          }
+
+          const currentUser = ctx.state.currentUser;
+          const { order_reference = '', share_id = '', reason } = ctx.action.params;
+
+          if (!order_reference || !share_id) {
+            ctx.throw(400, 'Order reference and share id are required');
+          }
+
+          try {
+            const response = await fetch(
+              `${config.servicesApiUrl}/tickets/backoffice/orders/${order_reference}/tickets/shares/${share_id}/cancel`,
+              {
+                method: 'POST',
+                body: JSON.stringify({ requested_by: currentUser?.email, reason }),
+                headers: {
+                  Authorization: `Basic ${credentials}`,
+                  'Content-Type': 'application/json',
+                  Accept: 'application/json',
+                },
+              },
+            );
+
+            const res = await response.json();
+
+            if (!response.ok) {
+              ctx.throw(400, res?.message || 'Could not cancel shared ticket, try again later');
+            }
+
+            ctx.body = { data: res?.data ?? res };
+          } catch (error: any) {
+            ctx.throw(error?.status || 400, error?.message || 'Could not cancel shared ticket, try again later');
+          }
+
           await next();
         },
 

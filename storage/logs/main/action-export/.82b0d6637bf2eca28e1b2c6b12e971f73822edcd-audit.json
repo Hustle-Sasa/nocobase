@@ -6,24 +6,9 @@
     "auditLog": "/Users/abi/workspaces/hustle/support-portal/storage/logs/main/action-export/.82b0d6637bf2eca28e1b2c6b12e971f73822edcd-audit.json",
     "files": [
         {
-            "date": 1782203740145,
-            "name": "/Users/abi/workspaces/hustle/support-portal/storage/logs/main/action-export/2026-06-23.log",
-            "hash": "3ccc59085d60be70cb8e74189c0ccad601c4394ec30a44e5025d83b49df0fc33"
-        },
-        {
-            "date": 1782839981664,
-            "name": "/Users/abi/workspaces/hustle/support-portal/storage/logs/main/action-export/2026-06-30.log",
-            "hash": "51dfd1a5a3efe29353a837324b24a970da9b0033ba4c51995ceae76a73f3d4a3"
-        },
-        {
-            "date": 1782885691134,
-            "name": "/Users/abi/workspaces/hustle/support-portal/storage/logs/main/action-export/2026-07-01.log",
-            "hash": "96997f0f1a4a736d13b7f79aafae3bf5895be4f9110f949c23a85c2eacdccc59"
-        },
-        {
-            "date": 1782972296051,
-            "name": "/Users/abi/workspaces/hustle/support-portal/storage/logs/main/action-export/2026-07-02.log",
-            "hash": "2295b039a872f77e2d72286a819b9562a7fb7b7dde497ec0f157109d0e96c7b6"
+            "date": 1791306392797,
+            "name": "/Users/abi/workspaces/hustle/support-portal/storage/logs/main/action-export/2026-10-06.log",
+            "hash": "cebb4a4d2da91ebf5bfbc97e501f9dc92dcf8bc69a573787312c4cd8995acad1"
         }
     ],
     "hashType": "sha256"

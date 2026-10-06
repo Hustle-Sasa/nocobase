@@ -13,6 +13,7 @@ import type { DataItem } from './type';
 import OrderItems from './OrderItems';
 import RefundForm from './RefundForm';
 import Receipts from './Receipts';
+import SharedTickets from './SharedTickets';
 
 export type { DataItem, OrderItem, ProductCover, ProductBannerAsset, ExtraDetails, Buyer } from './type';
 
@@ -38,7 +39,7 @@ function OrderDetail({ selectedItem }: { selectedItem?: DataItem }) {
       const nameCheck = typeof role?.name === 'string' ? role.name : undefined;
       const titleCheck = typeof role?.title === 'string' ? role.title : undefined;
       const roleName = nameCheck || titleCheck;
-      return roleName?.toLowerCase() === 'technical';
+      return roleName?.toLowerCase() !== 'technical';
     });
 
   /**
@@ -82,6 +83,15 @@ function OrderDetail({ selectedItem }: { selectedItem?: DataItem }) {
       label: 'Payments',
       children: <OrderPayments order={data.order_reference} status={data?.status} mutate={refresh} />,
     },
+    ...(isDeveloper
+      ? [
+          {
+            key: 'shared-tickets',
+            label: 'Shared tickets',
+            children: <SharedTickets order={data.order_reference} />,
+          },
+        ]
+      : []),
     ...(completedStatus.includes(data?.status)
       ? [
           {
@@ -96,7 +106,7 @@ function OrderDetail({ selectedItem }: { selectedItem?: DataItem }) {
           {
             key: 'additional-actions',
             label: 'Additional actions',
-            children: <AdditionalActions selectedItem={data} />,
+            children: <AdditionalActions selectedItem={data} onUpdated={refresh} />,
           },
         ]
       : []),
