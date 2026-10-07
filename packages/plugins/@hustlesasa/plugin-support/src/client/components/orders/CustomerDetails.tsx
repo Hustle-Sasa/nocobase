@@ -3,15 +3,18 @@ import React from 'react';
 import { Card, Flex, Skeleton } from 'antd';
 import { EnvironmentOutlined, MailOutlined, PhoneOutlined, UserOutlined } from '@ant-design/icons';
 import { useRequest } from '@nocobase/client';
+import { useEnvironment } from '../(shared)/use-environment-settings';
 
 function BuyerInfo({ selectedItem }) {
   const shop_id = selectedItem?.hustle_ids?.[0];
+  const environment = useEnvironment();
 
   /**
    * api
    */
   const { data: response, loading } = useRequest<{ data: [] }>({
     url: `orders:getHustle/${shop_id}`,
+    params: { env: environment },
   });
 
   const merchant = response?.data?.['data'] || {};

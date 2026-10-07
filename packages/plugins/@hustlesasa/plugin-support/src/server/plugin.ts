@@ -215,6 +215,22 @@ export class PluginSupportServer extends Plugin {
       },
     });
 
+    // Checks every role assigned to the user (not just the active one), matching useCurrentRoles() on the client
+    const hasTechnicalRole = async (ctx: any) => {
+      const currentUser = ctx.state.currentUser;
+
+      if (!currentUser) return false;
+
+      const roles: any[] =
+        currentUser.roles ?? (await this.db.getRepository('users.roles', currentUser.id).find({ raw: true }));
+
+      return roles.some((role: any) =>
+        [role?.name, role?.title].some((value) => typeof value === 'string' && value.toLowerCase() === 'technical'),
+      );
+    };
+
+    const getUserDisplayName = (user: any) => user?.nickname || user?.username || user?.email || '';
+
     // for orders
     this.app.resourceManager.define({
       name: 'orders',
@@ -222,6 +238,8 @@ export class PluginSupportServer extends Plugin {
         // List action - get all items
 
         list: async (ctx: any, next) => {
+          const { cfg, creds } = resolveEnv(ctx.action?.params?.env ?? 'production');
+
           const { page = 1, limit = 30, search = '', status = '', id = '' } = ctx.action.params;
 
           try {
@@ -229,12 +247,12 @@ export class PluginSupportServer extends Plugin {
             const searchParam = search ? `&search=${search}` : '';
             const statusParam = status ? `&status=${status}` : '';
             const requestUrl = id
-              ? `${config.servicesApiUrl}/orders/back-office/${id}`
-              : `${config.servicesApiUrl}/orders/back-office?limit=${limit}&page=${page}${searchParam}${statusParam}`;
+              ? `${cfg.servicesApiUrl}/orders/back-office/${id}`
+              : `${cfg.servicesApiUrl}/orders/back-office?limit=${limit}&page=${page}${searchParam}${statusParam}`;
 
             const response = await fetch(requestUrl, {
               headers: {
-                Authorization: `Basic ${credentials}`,
+                Authorization: `Basic ${creds}`,
               },
             });
             let res = await response.json();
@@ -287,6 +305,8 @@ export class PluginSupportServer extends Plugin {
 
         // Get single item action
         get: async (ctx: any, next) => {
+          const { cfg, creds } = resolveEnv(ctx.action?.params?.env ?? 'production');
+
           try {
             const id = ctx.action.params.filterByTk || ctx.params.id;
 
@@ -294,9 +314,9 @@ export class PluginSupportServer extends Plugin {
               ctx.throw(400, 'ID is required');
             }
 
-            const response = await fetch(`${config.servicesApiUrl}/orders/back-office/${id}`, {
+            const response = await fetch(`${cfg.servicesApiUrl}/orders/back-office/${id}`, {
               headers: {
-                Authorization: `Basic ${credentials}`,
+                Authorization: `Basic ${creds}`,
               },
             });
             const res = await response.json();
@@ -315,6 +335,8 @@ export class PluginSupportServer extends Plugin {
 
         // list order payments action
         listPayments: async (ctx: any, next) => {
+          const { cfg, creds } = resolveEnv(ctx.action?.params?.env ?? 'production');
+
           try {
             const { page = 1, pageSize = 20, order_reference = '' } = ctx.action.params;
 
@@ -323,10 +345,10 @@ export class PluginSupportServer extends Plugin {
             }
 
             const response = await fetch(
-              `${config.servicesApiUrl}/payments-v2/back-office/order-payments?order_reference=${order_reference}`,
+              `${cfg.servicesApiUrl}/payments-v2/back-office/order-payments?order_reference=${order_reference}`,
               {
                 headers: {
-                  Authorization: `Basic ${credentials}`,
+                  Authorization: `Basic ${creds}`,
                 },
               },
             );
@@ -357,13 +379,15 @@ export class PluginSupportServer extends Plugin {
         },
 
         resend: async (ctx, next) => {
+          const { cfg, creds } = resolveEnv(ctx.action?.params?.env ?? 'production');
+
           const { order_reference = '' } = ctx.action.params;
           try {
-            const response = await fetch(`${config.servicesApiUrl}/orders/back-office/resend-ticket`, {
+            const response = await fetch(`${cfg.servicesApiUrl}/orders/back-office/resend-ticket`, {
               method: 'POST',
               body: JSON.stringify({ orderReference: order_reference }),
               headers: {
-                Authorization: `Basic ${credentials}`,
+                Authorization: `Basic ${creds}`,
               },
             });
 
@@ -382,13 +406,15 @@ export class PluginSupportServer extends Plugin {
         },
 
         regenerate: async (ctx, next) => {
+          const { cfg, creds } = resolveEnv(ctx.action?.params?.env ?? 'production');
+
           const { order_id = '' } = ctx.action.params;
           try {
-            const response = await fetch(`${config.servicesApiUrl}/orders/back-office/regenerate-ticket`, {
+            const response = await fetch(`${cfg.servicesApiUrl}/orders/back-office/regenerate-ticket`, {
               method: 'POST',
               body: JSON.stringify({ orderId: order_id }),
               headers: {
-                Authorization: `Basic ${credentials}`,
+                Authorization: `Basic ${creds}`,
               },
             });
 
@@ -407,12 +433,14 @@ export class PluginSupportServer extends Plugin {
         },
 
         delete: async (ctx, next) => {
+          const { cfg, creds } = resolveEnv(ctx.action?.params?.env ?? 'production');
+
           const id = ctx?.action?.params.filterByTk || ctx.params.id;
           try {
-            const response = await fetch(`${config.servicesApiUrl}/orders/back-office/cancel-order/${id}`, {
+            const response = await fetch(`${cfg.servicesApiUrl}/orders/back-office/cancel-order/${id}`, {
               method: 'DELETE',
               headers: {
-                Authorization: `Basic ${credentials}`,
+                Authorization: `Basic ${creds}`,
               },
             });
 
@@ -431,14 +459,16 @@ export class PluginSupportServer extends Plugin {
         },
 
         confirm: async (ctx, next) => {
+          const { cfg, creds } = resolveEnv(ctx.action?.params?.env ?? 'production');
+
           const { order_reference = '' } = ctx.action.params;
 
           try {
-            const response = await fetch(`${config.servicesApiUrl}/payments-v2/back-office/confirm-payment`, {
+            const response = await fetch(`${cfg.servicesApiUrl}/payments-v2/back-office/confirm-payment`, {
               method: 'POST',
               body: JSON.stringify({ orderReference: order_reference }),
               headers: {
-                Authorization: `Basic ${credentials}`,
+                Authorization: `Basic ${creds}`,
               },
             });
 
@@ -454,16 +484,18 @@ export class PluginSupportServer extends Plugin {
         },
 
         refund: async (ctx, next) => {
+          const { cfg, creds } = resolveEnv(ctx.action?.params?.env ?? 'production');
+
           const user = ctx.state.currentUser;
 
           const { reason = '', order = '' } = ctx.action.params;
 
           try {
-            const response = await fetch(`${config.coreApiUrl}/refund/6`, {
+            const response = await fetch(`${cfg.coreApiUrl}/refund/6`, {
               method: 'POST',
               body: JSON.stringify({ reason, order, user: user.email }),
               headers: {
-                Authorization: `Basic ${credentials}`,
+                Authorization: `Basic ${creds}`,
                 'Content-Type': 'application/json',
                 Accept: 'application/json',
               },
@@ -485,10 +517,12 @@ export class PluginSupportServer extends Plugin {
         },
 
         verifyPayment: async (ctx, next) => {
+          const { cfg, creds } = resolveEnv(ctx.action?.params?.env ?? 'production');
+
           const { transaction_reference = '', order_reference = '', amount = '' } = ctx.action.params;
 
           try {
-            const response = await fetch(`${config.servicesApiUrl}/payments-v2/handle-callback/daraja-paybill`, {
+            const response = await fetch(`${cfg.servicesApiUrl}/payments-v2/handle-callback/daraja-paybill`, {
               method: 'POST',
               body: JSON.stringify({
                 ManuallyVerified: true,
@@ -515,8 +549,182 @@ export class PluginSupportServer extends Plugin {
           await next();
         },
 
+        // List users who have access to the support portal
+        listPlatformUsers: async (ctx, next) => {
+          if (!(await hasTechnicalRole(ctx))) {
+            ctx.throw(403, 'Only engineers can perform this kind of action');
+          }
+
+          const users = await this.db.getRepository('users').find({
+            fields: ['id', 'nickname', 'username', 'email'],
+            sort: ['nickname'],
+          });
+
+          ctx.body = {
+            data: users.map((user: any) => ({
+              id: user.get('id'),
+              name: getUserDisplayName(user.toJSON()),
+              email: user.get('email'),
+            })),
+          };
+
+          await next();
+        },
+
+        changePhoneNumber: async (ctx, next) => {
+          const { cfg, creds } = resolveEnv(ctx.action?.params?.env ?? 'production');
+
+          if (!(await hasTechnicalRole(ctx))) {
+            ctx.throw(403, 'Only engineers can perform this kind of action');
+          }
+
+          const currentUser = ctx.state.currentUser;
+          const {
+            order_reference = '',
+            old_phone_number = '',
+            new_phone_number = '',
+            requested_by = [],
+            reason = '',
+          } = ctx.action.params;
+
+          const requesterIds = (Array.isArray(requested_by) ? requested_by : [requested_by]).filter(Boolean);
+
+          if (!order_reference || !new_phone_number || !requesterIds.length || !reason) {
+            ctx.throw(400, 'Ticket id, new phone number, requested by and reason are required');
+          }
+
+          const requesters = await this.db.getRepository('users').find({
+            filter: { id: { $in: requesterIds } },
+            fields: ['id', 'nickname', 'username', 'email'],
+          });
+
+          if (requesters.length !== requesterIds.length) {
+            ctx.throw(400, 'One or more requesting users were not found');
+          }
+
+          const requestedByEmails = requesters
+            .map((requester: any) => requester.get('email'))
+            .filter(Boolean)
+            .join(',');
+
+          try {
+            const response = await fetch(
+              `${cfg.servicesApiUrl}/tickets/backoffice/orders/${order_reference}/tickets/phone`,
+              {
+                method: 'PUT',
+                body: JSON.stringify({
+                  old_phone: old_phone_number,
+                  new_phone: new_phone_number,
+                  requested_by: requestedByEmails,
+                  reason,
+                }),
+                headers: {
+                  Authorization: `Basic ${creds}`,
+                  'Content-Type': 'application/json',
+                  Accept: 'application/json',
+                },
+              },
+            );
+
+            const res = await response.json();
+
+            if (!response.ok || !res?.data) {
+              ctx.throw(400, res?.message || 'Could not change phone number, try again later');
+            }
+
+            ctx.body = { data: res.data };
+          } catch (error: any) {
+            ctx.throw(error?.status || 400, error?.message || 'Could not change phone number, try again later');
+          }
+          await next();
+        },
+
+        listSharedTickets: async (ctx: any, next) => {
+          const { cfg, creds } = resolveEnv(ctx.action?.params?.env ?? 'production');
+
+          if (!(await hasTechnicalRole(ctx))) {
+            ctx.throw(403, 'Only engineers can perform this kind of action');
+          }
+
+          const { order_reference = '' } = ctx.action.params;
+
+          if (!order_reference) {
+            ctx.throw(400, 'Order reference is required');
+          }
+
+          try {
+            const response = await fetch(
+              `${cfg.servicesApiUrl}/tickets/backoffice/orders/${order_reference}/tickets/shares`,
+              {
+                headers: {
+                  Authorization: `Basic ${creds}`,
+                },
+              },
+            );
+
+            const res = await response.json();
+
+            ctx.body = {
+              data: {
+                shares: Array.isArray(res?.data?.shares) ? res.data.shares : [],
+                ticket_count: res?.data?.ticket_count ?? 0,
+                share_count: res?.data?.share_count ?? 0,
+              },
+            };
+          } catch (error: any) {
+            console.error('Error listing shared tickets', error);
+            ctx.throw(404, 'Not found');
+          }
+
+          await next();
+        },
+
+        cancelSharedTicket: async (ctx: any, next) => {
+          const { cfg, creds } = resolveEnv(ctx.action?.params?.env ?? 'production');
+
+          if (!(await hasTechnicalRole(ctx))) {
+            ctx.throw(403, 'Only engineers can perform this kind of action');
+          }
+
+          const currentUser = ctx.state.currentUser;
+          const { order_reference = '', share_id = '', reason } = ctx.action.params;
+
+          if (!order_reference || !share_id) {
+            ctx.throw(400, 'Order reference and share id are required');
+          }
+
+          try {
+            const response = await fetch(
+              `${cfg.servicesApiUrl}/tickets/backoffice/orders/${order_reference}/tickets/shares/${share_id}/cancel`,
+              {
+                method: 'POST',
+                body: JSON.stringify({ requested_by: currentUser?.email, reason }),
+                headers: {
+                  Authorization: `Basic ${creds}`,
+                  'Content-Type': 'application/json',
+                  Accept: 'application/json',
+                },
+              },
+            );
+
+            const res = await response.json();
+
+            if (!response.ok) {
+              ctx.throw(400, res?.message || 'Could not cancel shared ticket, try again later');
+            }
+
+            ctx.body = { data: res?.data ?? res };
+          } catch (error: any) {
+            ctx.throw(error?.status || 400, error?.message || 'Could not cancel shared ticket, try again later');
+          }
+
+          await next();
+        },
+
         // Get single item action
         getHustle: async (ctx: any, next) => {
+          const { cfg, creds } = resolveEnv(ctx.action?.params?.env ?? 'production');
+
           try {
             const id = ctx.action.params.filterByTk || ctx.params.id;
 
@@ -524,9 +732,9 @@ export class PluginSupportServer extends Plugin {
               ctx.throw(400, 'ID is required');
             }
 
-            const response = await fetch(`${config.coreApiUrl}/account/hustle/${id}`, {
+            const response = await fetch(`${cfg.coreApiUrl}/account/hustle/${id}`, {
               headers: {
-                Authorization: `Basic ${credentials}`,
+                Authorization: `Basic ${creds}`,
               },
             });
 

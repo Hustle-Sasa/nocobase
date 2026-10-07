@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Button, Flex, message, Spin, Table, TableColumnsType, Tag } from 'antd';
 import { useAPIClient, useRequest } from '@nocobase/client';
+import { useEnvironment } from '../(shared)/use-environment-settings';
 import { CopyOutlined } from '@ant-design/icons';
 import { format } from 'date-fns';
 
@@ -104,6 +105,7 @@ function OrderPayments({ order, status, mutate }) {
    * api
    */
   const api = useAPIClient();
+  const environment = useEnvironment();
   const {
     data: response,
     loading,
@@ -112,6 +114,7 @@ function OrderPayments({ order, status, mutate }) {
     url: 'orders:listPayments',
     params: {
       order_reference: order,
+      env: environment,
     },
   });
 
@@ -200,6 +203,7 @@ function OrderPayments({ order, status, mutate }) {
         url: `orders:confirm`,
         params: {
           order_reference: ref,
+          env: environment,
         },
       });
 

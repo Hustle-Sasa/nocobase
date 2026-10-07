@@ -4,10 +4,10 @@ const ENV_KEY = 'support_environment';
 
 export type SupportEnvironment = 'production' | 'staging';
 
-export function useEnvironmentSettings() {
+export function useEnvironmentSettings(defaultEnvironment: SupportEnvironment = 'staging') {
   const [environment, setEnvironmentState] = React.useState<SupportEnvironment>(() => {
-    if (typeof window === 'undefined') return 'staging';
-    return (localStorage.getItem(ENV_KEY) as SupportEnvironment) || 'staging';
+    if (typeof window === 'undefined') return defaultEnvironment;
+    return (localStorage.getItem(ENV_KEY) as SupportEnvironment) || defaultEnvironment;
   });
 
   const setEnvironment = React.useCallback((value: SupportEnvironment) => {
@@ -17,3 +17,8 @@ export function useEnvironmentSettings() {
 
   return { environment, setEnvironment };
 }
+
+// Lets nested components (e.g. order detail tabs) read the environment chosen on the page
+export const EnvironmentContext = React.createContext<SupportEnvironment>('production');
+
+export const useEnvironment = () => React.useContext(EnvironmentContext);

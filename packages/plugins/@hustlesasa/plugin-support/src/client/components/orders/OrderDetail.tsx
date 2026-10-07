@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { QuestionCircleOutlined, CalendarOutlined } from '@ant-design/icons';
 import { Flex, Tabs, Button, Typography, Popconfirm, message, Skeleton, Divider, Modal, Input, Form } from 'antd';
 import { useAPIClient, useRequest, useCurrentRoles } from '@nocobase/client';
+import { useEnvironment } from '../(shared)/use-environment-settings';
 import type { TabsProps } from 'antd';
 import { format } from 'date-fns';
 
@@ -13,6 +14,7 @@ import type { DataItem } from './type';
 import OrderItems from './OrderItems';
 import RefundForm from './RefundForm';
 import Receipts from './Receipts';
+import SharedTickets from './SharedTickets';
 
 export type { DataItem, OrderItem, ProductCover, ProductBannerAsset, ExtraDetails, Buyer } from './type';
 
@@ -45,6 +47,7 @@ function OrderDetail({ selectedItem }: { selectedItem?: DataItem }) {
    * api
    */
   const api = useAPIClient();
+  const environment = useEnvironment();
   const [messageApi, contextHolder] = message.useMessage();
   const {
     data: response,
@@ -53,10 +56,10 @@ function OrderDetail({ selectedItem }: { selectedItem?: DataItem }) {
   } = useRequest<{ data: { data: DataItem } }>(
     {
       url: `orders:get/${id}`,
-      params: { id },
+      params: { id, env: environment },
     },
     {
-      refreshDeps: [id],
+      refreshDeps: [id, environment],
     },
   );
 
@@ -82,6 +85,15 @@ function OrderDetail({ selectedItem }: { selectedItem?: DataItem }) {
       label: 'Payments',
       children: <OrderPayments order={data.order_reference} status={data?.status} mutate={refresh} />,
     },
+    ...(isDeveloper && data?.status === 'DELIVERED'
+      ? [
+          {
+            key: 'shared-tickets',
+            label: 'Shared tickets',
+            children: <SharedTickets order={data.order_reference} />,
+          },
+        ]
+      : []),
     ...(completedStatus.includes(data?.status)
       ? [
           {
@@ -96,7 +108,7 @@ function OrderDetail({ selectedItem }: { selectedItem?: DataItem }) {
           {
             key: 'additional-actions',
             label: 'Additional actions',
-            children: <AdditionalActions selectedItem={data} />,
+            children: <AdditionalActions selectedItem={data} onUpdated={refresh} />,
           },
         ]
       : []),
@@ -110,7 +122,7 @@ function OrderDetail({ selectedItem }: { selectedItem?: DataItem }) {
     try {
       const response = await api.request({
         url: `orders:delete/${id}`,
-        params: { id },
+        params: { id, env: environment },
       });
 
       if (response?.data?.data?.['data']) {
@@ -132,6 +144,7 @@ function OrderDetail({ selectedItem }: { selectedItem?: DataItem }) {
         url: `orders:resend`,
         params: {
           order_reference: ref,
+          env: environment,
         },
       });
 

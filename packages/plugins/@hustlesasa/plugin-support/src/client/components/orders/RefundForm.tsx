@@ -1,5 +1,6 @@
 import React from 'react';
 import { useAPIClient } from '@nocobase/client';
+import { useEnvironment } from '../(shared)/use-environment-settings';
 import { Form } from 'antd';
 
 interface Values {
@@ -8,6 +9,7 @@ interface Values {
 
 const RefundForm = ({ selectedItem, dom, setOpen, message, setConfirmLoading }) => {
   const api = useAPIClient();
+  const environment = useEnvironment();
   const [form] = Form.useForm();
 
   /**
@@ -23,6 +25,7 @@ const RefundForm = ({ selectedItem, dom, setOpen, message, setConfirmLoading }) 
         params: {
           order: selectedItem.id,
           reason: values.reason,
+          env: environment,
         },
       });
 

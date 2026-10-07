@@ -2,6 +2,7 @@ import React, { useRef } from 'react';
 import { Button, Card, Flex, Typography } from 'antd';
 import { DownloadOutlined } from '@ant-design/icons';
 import { useRequest } from '@nocobase/client';
+import { useEnvironment } from '../(shared)/use-environment-settings';
 
 import type { DataItem } from './OrderDetail';
 import ReceiptContent from './(components)/receipt-content';
@@ -16,12 +17,14 @@ function Receipts({ selectedItem }: { selectedItem?: DataItem }) {
    * variables
    */
   const shop_id = selectedItem?.hustle_ids?.[0];
+  const environment = useEnvironment();
 
   /**
    * apis
    */
   const { data: response } = useRequest<{ data: any }>({
     url: `orders:getHustle/${shop_id}`,
+    params: { env: environment },
   });
 
   const hustle = response?.data?.['data'] ?? {};

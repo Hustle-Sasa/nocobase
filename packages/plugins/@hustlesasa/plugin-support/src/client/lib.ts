@@ -79,3 +79,42 @@ export const handleCopy = async (value: string) => {
     message.error('Failed to copy');
   }
 };
+
+export const ticketStatusText = (status: string) => {
+  switch (status) {
+    case 'PENDING':
+      return 'PENDING';
+    case 'ACCEPTED':
+      return 'ACCEPTED';
+    case 'CANCELLED':
+      return 'CANCELLED';
+    case 'EXPIRED':
+      return 'EXPIRED';
+    default:
+      return status;
+  }
+};
+
+export const ticketStatus = (status: any) => {
+  switch (status) {
+    case 'EXPIRED':
+      return { color: '#F9FAFB', text: '#1D2739', label: 'DRAFT', value: 'DRAFT' };
+    case 'PENDING':
+      return { color: '#FEF6E7', text: '#F3A218', label: 'PENDING', value: 'PENDING' };
+    case 'ACCEPTED':
+      return { color: '#E7F6EC', text: '#036B26', label: 'ACCEPTED', value: 'ACCEPTED' };
+    case 'CANCELLED':
+      return { color: '#FBEDF1', text: '#D34875', label: 'CANCELLED', value: 'CANCELLED' };
+    default:
+      return status;
+  }
+};
+
+export const getTicketStatusColor = (status: string) => {
+  const colors = {
+    pending: '#F3A218', // orange
+    accepted: '#036B26', // green
+    cancelled: '#D42620', // red
+  };
+  return colors[status as keyof typeof colors] || '#8c8c8c';
+};
