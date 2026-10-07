@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { QuestionCircleOutlined, CalendarOutlined } from '@ant-design/icons';
 import { Flex, Tabs, Button, Typography, Popconfirm, message, Skeleton, Divider, Modal, Input, Form } from 'antd';
 import { useAPIClient, useRequest, useCurrentRoles } from '@nocobase/client';
+import { useEnvironment } from '../(shared)/use-environment-settings';
 import type { TabsProps } from 'antd';
 import { format } from 'date-fns';
 
@@ -39,13 +40,14 @@ function OrderDetail({ selectedItem }: { selectedItem?: DataItem }) {
       const nameCheck = typeof role?.name === 'string' ? role.name : undefined;
       const titleCheck = typeof role?.title === 'string' ? role.title : undefined;
       const roleName = nameCheck || titleCheck;
-      return roleName?.toLowerCase() !== 'technical';
+      return roleName?.toLowerCase() === 'technical';
     });
 
   /**
    * api
    */
   const api = useAPIClient();
+  const environment = useEnvironment();
   const [messageApi, contextHolder] = message.useMessage();
   const {
     data: response,
@@ -54,10 +56,10 @@ function OrderDetail({ selectedItem }: { selectedItem?: DataItem }) {
   } = useRequest<{ data: { data: DataItem } }>(
     {
       url: `orders:get/${id}`,
-      params: { id },
+      params: { id, env: environment },
     },
     {
-      refreshDeps: [id],
+      refreshDeps: [id, environment],
     },
   );
 
@@ -83,7 +85,7 @@ function OrderDetail({ selectedItem }: { selectedItem?: DataItem }) {
       label: 'Payments',
       children: <OrderPayments order={data.order_reference} status={data?.status} mutate={refresh} />,
     },
-    ...(isDeveloper
+    ...(isDeveloper && data?.status === 'DELIVERED'
       ? [
           {
             key: 'shared-tickets',
@@ -120,7 +122,7 @@ function OrderDetail({ selectedItem }: { selectedItem?: DataItem }) {
     try {
       const response = await api.request({
         url: `orders:delete/${id}`,
-        params: { id },
+        params: { id, env: environment },
       });
 
       if (response?.data?.data?.['data']) {
@@ -142,6 +144,7 @@ function OrderDetail({ selectedItem }: { selectedItem?: DataItem }) {
         url: `orders:resend`,
         params: {
           order_reference: ref,
+          env: environment,
         },
       });
 

@@ -215,20 +215,17 @@ export class PluginSupportServer extends Plugin {
       },
     });
 
+    // Checks every role assigned to the user (not just the active one), matching useCurrentRoles() on the client
     const hasTechnicalRole = async (ctx: any) => {
-      const roleNames: string[] = ctx.state.currentRoles || [];
+      const currentUser = ctx.state.currentUser;
 
-      if (!roleNames.length) return false;
+      if (!currentUser) return false;
 
-      const roles = await this.db.getRepository('roles').find({
-        filter: { name: { $in: roleNames } },
-        fields: ['name', 'title'],
-      });
+      const roles: any[] =
+        currentUser.roles ?? (await this.db.getRepository('users.roles', currentUser.id).find({ raw: true }));
 
       return roles.some((role: any) =>
-        [role.get('name'), role.get('title')].some(
-          (value) => typeof value === 'string' && value.toLowerCase() !== 'technical',
-        ),
+        [role?.name, role?.title].some((value) => typeof value === 'string' && value.toLowerCase() === 'technical'),
       );
     };
 
@@ -241,6 +238,8 @@ export class PluginSupportServer extends Plugin {
         // List action - get all items
 
         list: async (ctx: any, next) => {
+          const { cfg, creds } = resolveEnv(ctx.action?.params?.env ?? 'production');
+
           const { page = 1, limit = 30, search = '', status = '', id = '' } = ctx.action.params;
 
           try {
@@ -248,12 +247,12 @@ export class PluginSupportServer extends Plugin {
             const searchParam = search ? `&search=${search}` : '';
             const statusParam = status ? `&status=${status}` : '';
             const requestUrl = id
-              ? `${config.servicesApiUrl}/orders/back-office/${id}`
-              : `${config.servicesApiUrl}/orders/back-office?limit=${limit}&page=${page}${searchParam}${statusParam}`;
+              ? `${cfg.servicesApiUrl}/orders/back-office/${id}`
+              : `${cfg.servicesApiUrl}/orders/back-office?limit=${limit}&page=${page}${searchParam}${statusParam}`;
 
             const response = await fetch(requestUrl, {
               headers: {
-                Authorization: `Basic ${credentials}`,
+                Authorization: `Basic ${creds}`,
               },
             });
             let res = await response.json();
@@ -306,6 +305,8 @@ export class PluginSupportServer extends Plugin {
 
         // Get single item action
         get: async (ctx: any, next) => {
+          const { cfg, creds } = resolveEnv(ctx.action?.params?.env ?? 'production');
+
           try {
             const id = ctx.action.params.filterByTk || ctx.params.id;
 
@@ -313,9 +314,9 @@ export class PluginSupportServer extends Plugin {
               ctx.throw(400, 'ID is required');
             }
 
-            const response = await fetch(`${config.servicesApiUrl}/orders/back-office/${id}`, {
+            const response = await fetch(`${cfg.servicesApiUrl}/orders/back-office/${id}`, {
               headers: {
-                Authorization: `Basic ${credentials}`,
+                Authorization: `Basic ${creds}`,
               },
             });
             const res = await response.json();
@@ -334,6 +335,8 @@ export class PluginSupportServer extends Plugin {
 
         // list order payments action
         listPayments: async (ctx: any, next) => {
+          const { cfg, creds } = resolveEnv(ctx.action?.params?.env ?? 'production');
+
           try {
             const { page = 1, pageSize = 20, order_reference = '' } = ctx.action.params;
 
@@ -342,10 +345,10 @@ export class PluginSupportServer extends Plugin {
             }
 
             const response = await fetch(
-              `${config.servicesApiUrl}/payments-v2/back-office/order-payments?order_reference=${order_reference}`,
+              `${cfg.servicesApiUrl}/payments-v2/back-office/order-payments?order_reference=${order_reference}`,
               {
                 headers: {
-                  Authorization: `Basic ${credentials}`,
+                  Authorization: `Basic ${creds}`,
                 },
               },
             );
@@ -376,13 +379,15 @@ export class PluginSupportServer extends Plugin {
         },
 
         resend: async (ctx, next) => {
+          const { cfg, creds } = resolveEnv(ctx.action?.params?.env ?? 'production');
+
           const { order_reference = '' } = ctx.action.params;
           try {
-            const response = await fetch(`${config.servicesApiUrl}/orders/back-office/resend-ticket`, {
+            const response = await fetch(`${cfg.servicesApiUrl}/orders/back-office/resend-ticket`, {
               method: 'POST',
               body: JSON.stringify({ orderReference: order_reference }),
               headers: {
-                Authorization: `Basic ${credentials}`,
+                Authorization: `Basic ${creds}`,
               },
             });
 
@@ -401,13 +406,15 @@ export class PluginSupportServer extends Plugin {
         },
 
         regenerate: async (ctx, next) => {
+          const { cfg, creds } = resolveEnv(ctx.action?.params?.env ?? 'production');
+
           const { order_id = '' } = ctx.action.params;
           try {
-            const response = await fetch(`${config.servicesApiUrl}/orders/back-office/regenerate-ticket`, {
+            const response = await fetch(`${cfg.servicesApiUrl}/orders/back-office/regenerate-ticket`, {
               method: 'POST',
               body: JSON.stringify({ orderId: order_id }),
               headers: {
-                Authorization: `Basic ${credentials}`,
+                Authorization: `Basic ${creds}`,
               },
             });
 
@@ -426,12 +433,14 @@ export class PluginSupportServer extends Plugin {
         },
 
         delete: async (ctx, next) => {
+          const { cfg, creds } = resolveEnv(ctx.action?.params?.env ?? 'production');
+
           const id = ctx?.action?.params.filterByTk || ctx.params.id;
           try {
-            const response = await fetch(`${config.servicesApiUrl}/orders/back-office/cancel-order/${id}`, {
+            const response = await fetch(`${cfg.servicesApiUrl}/orders/back-office/cancel-order/${id}`, {
               method: 'DELETE',
               headers: {
-                Authorization: `Basic ${credentials}`,
+                Authorization: `Basic ${creds}`,
               },
             });
 
@@ -450,14 +459,16 @@ export class PluginSupportServer extends Plugin {
         },
 
         confirm: async (ctx, next) => {
+          const { cfg, creds } = resolveEnv(ctx.action?.params?.env ?? 'production');
+
           const { order_reference = '' } = ctx.action.params;
 
           try {
-            const response = await fetch(`${config.servicesApiUrl}/payments-v2/back-office/confirm-payment`, {
+            const response = await fetch(`${cfg.servicesApiUrl}/payments-v2/back-office/confirm-payment`, {
               method: 'POST',
               body: JSON.stringify({ orderReference: order_reference }),
               headers: {
-                Authorization: `Basic ${credentials}`,
+                Authorization: `Basic ${creds}`,
               },
             });
 
@@ -473,16 +484,18 @@ export class PluginSupportServer extends Plugin {
         },
 
         refund: async (ctx, next) => {
+          const { cfg, creds } = resolveEnv(ctx.action?.params?.env ?? 'production');
+
           const user = ctx.state.currentUser;
 
           const { reason = '', order = '' } = ctx.action.params;
 
           try {
-            const response = await fetch(`${config.coreApiUrl}/refund/6`, {
+            const response = await fetch(`${cfg.coreApiUrl}/refund/6`, {
               method: 'POST',
               body: JSON.stringify({ reason, order, user: user.email }),
               headers: {
-                Authorization: `Basic ${credentials}`,
+                Authorization: `Basic ${creds}`,
                 'Content-Type': 'application/json',
                 Accept: 'application/json',
               },
@@ -504,10 +517,12 @@ export class PluginSupportServer extends Plugin {
         },
 
         verifyPayment: async (ctx, next) => {
+          const { cfg, creds } = resolveEnv(ctx.action?.params?.env ?? 'production');
+
           const { transaction_reference = '', order_reference = '', amount = '' } = ctx.action.params;
 
           try {
-            const response = await fetch(`${config.servicesApiUrl}/payments-v2/handle-callback/daraja-paybill`, {
+            const response = await fetch(`${cfg.servicesApiUrl}/payments-v2/handle-callback/daraja-paybill`, {
               method: 'POST',
               body: JSON.stringify({
                 ManuallyVerified: true,
@@ -537,15 +552,13 @@ export class PluginSupportServer extends Plugin {
         // List users who have access to the support portal
         listPlatformUsers: async (ctx, next) => {
           if (!(await hasTechnicalRole(ctx))) {
-            ctx.throw(403, 'Only technical users can perform this action');
+            ctx.throw(403, 'Only engineers can perform this kind of action');
           }
 
           const users = await this.db.getRepository('users').find({
             fields: ['id', 'nickname', 'username', 'email'],
             sort: ['nickname'],
           });
-
-          console.log(users);
 
           ctx.body = {
             data: users.map((user: any) => ({
@@ -559,8 +572,10 @@ export class PluginSupportServer extends Plugin {
         },
 
         changePhoneNumber: async (ctx, next) => {
+          const { cfg, creds } = resolveEnv(ctx.action?.params?.env ?? 'production');
+
           if (!(await hasTechnicalRole(ctx))) {
-            ctx.throw(403, 'Only technical users can perform this action');
+            ctx.throw(403, 'Only engineers can perform this kind of action');
           }
 
           const currentUser = ctx.state.currentUser;
@@ -592,18 +607,9 @@ export class PluginSupportServer extends Plugin {
             .filter(Boolean)
             .join(',');
 
-          console.log({
-            body: JSON.stringify({
-              old_phone: old_phone_number,
-              new_phone: new_phone_number,
-              requested_by: requestedByEmails,
-              reason,
-            }),
-          });
-
           try {
             const response = await fetch(
-              `${config.servicesApiUrl}/tickets/backoffice/orders/${order_reference}/tickets/phone`,
+              `${cfg.servicesApiUrl}/tickets/backoffice/orders/${order_reference}/tickets/phone`,
               {
                 method: 'PUT',
                 body: JSON.stringify({
@@ -613,7 +619,7 @@ export class PluginSupportServer extends Plugin {
                   reason,
                 }),
                 headers: {
-                  Authorization: `Basic ${credentials}`,
+                  Authorization: `Basic ${creds}`,
                   'Content-Type': 'application/json',
                   Accept: 'application/json',
                 },
@@ -634,8 +640,10 @@ export class PluginSupportServer extends Plugin {
         },
 
         listSharedTickets: async (ctx: any, next) => {
+          const { cfg, creds } = resolveEnv(ctx.action?.params?.env ?? 'production');
+
           if (!(await hasTechnicalRole(ctx))) {
-            ctx.throw(403, 'Only technical users can perform this action');
+            ctx.throw(403, 'Only engineers can perform this kind of action');
           }
 
           const { order_reference = '' } = ctx.action.params;
@@ -646,10 +654,10 @@ export class PluginSupportServer extends Plugin {
 
           try {
             const response = await fetch(
-              `${config.servicesApiUrl}/tickets/backoffice/orders/${order_reference}/tickets/shares`,
+              `${cfg.servicesApiUrl}/tickets/backoffice/orders/${order_reference}/tickets/shares`,
               {
                 headers: {
-                  Authorization: `Basic ${credentials}`,
+                  Authorization: `Basic ${creds}`,
                 },
               },
             );
@@ -672,8 +680,10 @@ export class PluginSupportServer extends Plugin {
         },
 
         cancelSharedTicket: async (ctx: any, next) => {
+          const { cfg, creds } = resolveEnv(ctx.action?.params?.env ?? 'production');
+
           if (!(await hasTechnicalRole(ctx))) {
-            ctx.throw(403, 'Only technical users can perform this action');
+            ctx.throw(403, 'Only engineers can perform this kind of action');
           }
 
           const currentUser = ctx.state.currentUser;
@@ -685,12 +695,12 @@ export class PluginSupportServer extends Plugin {
 
           try {
             const response = await fetch(
-              `${config.servicesApiUrl}/tickets/backoffice/orders/${order_reference}/tickets/shares/${share_id}/cancel`,
+              `${cfg.servicesApiUrl}/tickets/backoffice/orders/${order_reference}/tickets/shares/${share_id}/cancel`,
               {
                 method: 'POST',
                 body: JSON.stringify({ requested_by: currentUser?.email, reason }),
                 headers: {
-                  Authorization: `Basic ${credentials}`,
+                  Authorization: `Basic ${creds}`,
                   'Content-Type': 'application/json',
                   Accept: 'application/json',
                 },
@@ -713,6 +723,8 @@ export class PluginSupportServer extends Plugin {
 
         // Get single item action
         getHustle: async (ctx: any, next) => {
+          const { cfg, creds } = resolveEnv(ctx.action?.params?.env ?? 'production');
+
           try {
             const id = ctx.action.params.filterByTk || ctx.params.id;
 
@@ -720,9 +732,9 @@ export class PluginSupportServer extends Plugin {
               ctx.throw(400, 'ID is required');
             }
 
-            const response = await fetch(`${config.coreApiUrl}/account/hustle/${id}`, {
+            const response = await fetch(`${cfg.coreApiUrl}/account/hustle/${id}`, {
               headers: {
-                Authorization: `Basic ${credentials}`,
+                Authorization: `Basic ${creds}`,
               },
             });
 

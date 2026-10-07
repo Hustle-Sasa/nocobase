@@ -9,6 +9,11 @@
             "date": 1791306392885,
             "name": "/Users/abi/workspaces/hustle/support-portal/storage/logs/main/user-data-sync/2026-10-06.log",
             "hash": "6acd5bdae8834aefc0dbf059e63531052e67760dd141f05e21b3aca3ae6e5737"
+        },
+        {
+            "date": 1791354622034,
+            "name": "/Users/abi/workspaces/hustle/support-portal/storage/logs/main/user-data-sync/2026-10-07.log",
+            "hash": "bfd309628ec33c95b5783d1d2f9341ad3f2643bf49c408fc03526d92164b13b6"
         }
     ],
     "hashType": "sha256"

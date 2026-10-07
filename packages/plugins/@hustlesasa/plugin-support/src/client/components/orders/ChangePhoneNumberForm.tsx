@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import { useAPIClient, useRequest } from '@nocobase/client';
+import { useEnvironment } from '../(shared)/use-environment-settings';
 import { Button, Form, Input, message, Modal, Select } from 'antd';
+import { startCase } from 'lodash';
 
 interface PlatformUser {
   id: number;
@@ -36,6 +38,7 @@ export const ChangePhoneNumberForm: React.FC<ChangePhoneNumberFormProps> = ({
   const [form] = Form.useForm();
   const [loading, setLoading] = useState(false);
   const api = useAPIClient();
+  const environment = useEnvironment();
 
   /**
    * api
@@ -68,6 +71,7 @@ export const ChangePhoneNumberForm: React.FC<ChangePhoneNumberFormProps> = ({
         method: 'POST',
         params: {
           order_reference: ticketId,
+          env: environment,
           old_phone_number: values.oldPhoneNumber,
           new_phone_number: values.newPhoneNumber,
           requested_by: values.requestedBy,
@@ -129,7 +133,10 @@ export const ChangePhoneNumberForm: React.FC<ChangePhoneNumberFormProps> = ({
             loading={usersLoading}
             placeholder="Select users"
             optionFilterProp="label"
-            options={users.map((user) => ({ value: user.id, label: user.name }))}
+            options={users.map((user) => ({
+              value: user.id,
+              label: user.name.includes('@') ? user.name : startCase(user.name),
+            }))}
           />
         </Form.Item>
 

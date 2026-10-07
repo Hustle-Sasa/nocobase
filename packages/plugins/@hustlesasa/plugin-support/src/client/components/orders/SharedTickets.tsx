@@ -17,8 +17,10 @@ import {
 } from 'antd';
 import { useAPIClient, useRequest } from '@nocobase/client';
 import { format } from 'date-fns';
+import { startCase } from 'lodash';
 
-import { getStatusColor } from '../../lib';
+import { useEnvironment } from '../(shared)/use-environment-settings';
+import { ticketStatus, ticketStatusText } from '../../lib';
 
 export interface SharedTicket {
   id: string;
@@ -72,6 +74,7 @@ function SharedTickets({ order }: { order?: string }) {
    * api
    */
   const api = useAPIClient();
+  const environment = useEnvironment();
   const {
     data: response,
     loading,
@@ -81,11 +84,12 @@ function SharedTickets({ order }: { order?: string }) {
       url: 'orders:listSharedTickets',
       params: {
         order_reference: order,
+        env: environment,
       },
     },
     {
       ready: !!order,
-      refreshDeps: [order],
+      refreshDeps: [order, environment],
     },
   );
 
@@ -127,7 +131,14 @@ function SharedTickets({ order }: { order?: string }) {
       key: 'status',
       render: (text: string) =>
         text ? (
-          <Tag color={SHARE_STATUS_COLORS[text.toLowerCase()] ?? getStatusColor(text.toLowerCase())}>{text}</Tag>
+          <Tag
+            color={ticketStatus(text.toUpperCase()).color}
+            style={{
+              color: ticketStatus(text.toUpperCase()).text,
+            }}
+          >
+            {ticketStatusText(text.toUpperCase())}
+          </Tag>
         ) : (
           '-'
         ),
@@ -159,7 +170,7 @@ function SharedTickets({ order }: { order?: string }) {
             Cancel
           </Button>
         ) : (
-          <Tooltip title="This share can no longer be cancelled">
+          <Tooltip title="This shared ticket can no longer be cancelled">
             <Button danger disabled>
               Cancel
             </Button>
@@ -187,6 +198,7 @@ function SharedTickets({ order }: { order?: string }) {
         params: {
           order_reference: order,
           share_id: shareToCancel.id,
+          env: environment,
           reason,
         },
       });
@@ -231,7 +243,7 @@ function SharedTickets({ order }: { order?: string }) {
         destroyOnClose
       >
         <Typography.Paragraph type="secondary">
-          {shareToCancel?.new_customer_name || 'The recipient'} will no longer have access to this ticket.
+          {startCase(shareToCancel?.new_customer_name) || 'The recipient'} will no longer have access to this ticket.
         </Typography.Paragraph>
 
         <Form form={form} layout="vertical" onFinish={cancelShare} preserve={false}>
@@ -240,7 +252,7 @@ function SharedTickets({ order }: { order?: string }) {
             name="reason"
             rules={[{ required: true, whitespace: true, message: 'Please enter the reason for cancelling' }]}
           >
-            <Input.TextArea rows={4} placeholder="Why is this share being cancelled?" />
+            <Input.TextArea rows={4} placeholder="Why is this shared ticket being cancelled?" />
           </Form.Item>
 
           <Form.Item style={{ marginBottom: 0 }}>

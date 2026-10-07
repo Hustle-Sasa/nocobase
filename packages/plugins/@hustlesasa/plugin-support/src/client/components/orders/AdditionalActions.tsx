@@ -10,6 +10,7 @@ import {
   SafetyCertificateOutlined,
 } from '@ant-design/icons';
 import { useAPIClient } from '@nocobase/client';
+import { useEnvironment } from '../(shared)/use-environment-settings';
 
 import ChangePhoneNumberForm from './ChangePhoneNumberForm';
 
@@ -31,6 +32,7 @@ function AdditionalActions({ selectedItem, onUpdated }: AdditionalActionsProps) 
    * api
    */
   const api = useAPIClient();
+  const environment = useEnvironment();
 
   /**
    * state
@@ -46,6 +48,7 @@ function AdditionalActions({ selectedItem, onUpdated }: AdditionalActionsProps) 
   const isPaystack = selectedItem?.payment_method_id === 'KE_BUYER_PAYSTACK_MOMO_PAYMENT';
   const canShowVerifyPayment = isPaystack && selectedItem?.status === 'PAYMENT_PROCESSING';
   const canRegenerateTicket = ['PAYMENT_COMPLETED', 'DELIVERED'].includes(selectedItem?.status ?? '');
+  const canChangePhoneNumber = selectedItem?.status === 'DELIVERED';
   const checkoutUrl = `https://purchase.hustlesasa.shop/checkout/${selectedItem?.order_reference ?? ''}`;
 
   /**
@@ -60,6 +63,7 @@ function AdditionalActions({ selectedItem, onUpdated }: AdditionalActionsProps) 
           transaction_reference: values.transactionRef,
           order_reference: values.orderRef,
           amount: values.amount,
+          env: environment,
         },
       });
 
@@ -84,6 +88,7 @@ function AdditionalActions({ selectedItem, onUpdated }: AdditionalActionsProps) 
         url: `orders:regenerate`,
         params: {
           order_id: id,
+          env: environment,
         },
       });
 
@@ -205,30 +210,32 @@ function AdditionalActions({ selectedItem, onUpdated }: AdditionalActionsProps) 
           </>
         )}
 
-        <Card>
-          <Flex gap={16} align="flex-start">
-            <PhoneOutlined style={{ fontSize: 20, color: '#eb2f96', marginTop: 4 }} />
-            <div>
-              <Typography.Title level={4} style={{ marginBottom: 8 }}>
-                Need to change the buyer's phone number?
-              </Typography.Title>
-              <Typography.Paragraph type="secondary" style={{ marginBottom: 12 }}>
-                Update the phone number the ticket was purchased with. Record who requested the change and why.
-              </Typography.Paragraph>
-              <Button type="primary" onClick={() => setChangePhoneOpen(true)}>
-                Change phone number
-              </Button>
-            </div>
-          </Flex>
+        {canChangePhoneNumber && (
+          <Card>
+            <Flex gap={16} align="flex-start">
+              <PhoneOutlined style={{ fontSize: 20, color: '#eb2f96', marginTop: 4 }} />
+              <div>
+                <Typography.Title level={4} style={{ marginBottom: 8 }}>
+                  Need to change the buyer's phone number?
+                </Typography.Title>
+                <Typography.Paragraph type="secondary" style={{ marginBottom: 12 }}>
+                  Update the phone number the ticket was purchased with. Record who requested the change and why.
+                </Typography.Paragraph>
+                <Button type="primary" onClick={() => setChangePhoneOpen(true)}>
+                  Change phone number
+                </Button>
+              </div>
+            </Flex>
 
-          <ChangePhoneNumberForm
-            open={changePhoneOpen}
-            ticketId={selectedItem?.order_reference}
-            phoneNumber={selectedItem?.buyer?.phone || selectedItem?.payer_phone}
-            onClose={() => setChangePhoneOpen(false)}
-            onSuccess={onUpdated}
-          />
-        </Card>
+            <ChangePhoneNumberForm
+              open={changePhoneOpen}
+              ticketId={selectedItem?.order_reference}
+              phoneNumber={selectedItem?.buyer?.phone || selectedItem?.payer_phone}
+              onClose={() => setChangePhoneOpen(false)}
+              onSuccess={onUpdated}
+            />
+          </Card>
+        )}
 
         {canShowVerifyPayment && (
           <Card>

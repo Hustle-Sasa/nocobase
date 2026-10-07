@@ -177,7 +177,7 @@ const CustomerOrders: React.FC<Props> = ({ customer, environment }) => {
         scroll={{ x: 700 }}
         onRow={(record) => ({
           onClick: () => {
-            globalThis.location.href = `${ORDERS_PAGE_PATH}?orderId=${record.id}`;
+            globalThis.location.href = `${ORDERS_PAGE_PATH}?orderId=${record.id}&env=${environment}`;
           },
           style: { cursor: 'pointer' },
         })}

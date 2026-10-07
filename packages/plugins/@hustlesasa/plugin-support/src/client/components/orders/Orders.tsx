@@ -9,6 +9,12 @@ import { formatMoney, status, statusText } from '../../lib';
 import { DataItem, Buyer } from './type';
 import OrderDetail from './OrderDetail';
 import { BlockName } from './constant';
+import EnvironmentSelector from '../(shared)/EnvironmentSelector';
+import {
+  EnvironmentContext,
+  useEnvironmentSettings,
+  type SupportEnvironment,
+} from '../(shared)/use-environment-settings';
 
 const { Option } = Select;
 
@@ -29,10 +35,15 @@ export const Orders = withDynamicSchemaProps(
       total: 0,
     });
     const autoOpenOrderId = useRef<string | null>(null);
+    const { environment, setEnvironment } = useEnvironmentSettings('production');
 
     useEffect(() => {
       const params = new URLSearchParams(globalThis.location?.search || '');
       const orderId = params.get('orderId');
+      const env = params.get('env');
+      if (env === 'production' || env === 'staging') {
+        setEnvironment(env);
+      }
       if (orderId) {
         autoOpenOrderId.current = orderId;
         setSearchOrderId(orderId);
@@ -57,11 +68,12 @@ export const Orders = withDynamicSchemaProps(
           page: pagination.current,
           limit: pagination.pageSize,
           id: searchOrderId,
+          env: environment,
         },
       },
       {
         debounceWait: 300,
-        refreshDeps: [searchText, pagination.current, pagination.pageSize, filterStatus, searchOrderId],
+        refreshDeps: [searchText, pagination.current, pagination.pageSize, filterStatus, searchOrderId, environment],
         onSuccess: (res) => {
           setPagination((prev) => ({
             ...prev,
@@ -199,6 +211,16 @@ export const Orders = withDynamicSchemaProps(
       }
     };
 
+    const handleEnvironmentChange = (value: SupportEnvironment) => {
+      setEnvironment(value);
+      setModalVisible(false);
+      setSelectedItem(null);
+      setPagination((prev) => ({
+        ...prev,
+        current: 1,
+      }));
+    };
+
     // Update handleTableChange
     const handleTableChange = (p: number) => {
       setPagination((prev) => ({
@@ -248,6 +270,8 @@ export const Orders = withDynamicSchemaProps(
           </Select>
 
           <Flex align="center" justify="flex-end" gap={8}>
+            <EnvironmentSelector value={environment} onChange={handleEnvironmentChange} />
+
             <Select<'general' | 'orderId'>
               value={searchType}
               style={{ width: 300 }}
@@ -328,7 +352,11 @@ export const Orders = withDynamicSchemaProps(
             maxWidth: '100vw',
           }}
         >
-          {selectedItem && <OrderDetail selectedItem={selectedItem} />}
+          {selectedItem && (
+            <EnvironmentContext.Provider value={environment}>
+              <OrderDetail selectedItem={selectedItem} />
+            </EnvironmentContext.Provider>
+          )}
         </Drawer>
       </div>
     );
