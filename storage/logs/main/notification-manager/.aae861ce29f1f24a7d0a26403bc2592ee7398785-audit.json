@@ -14,6 +14,11 @@
             "date": 1791354621911,
             "name": "/Users/abi/workspaces/hustle/support-portal/storage/logs/main/notification-manager/2026-10-07.log",
             "hash": "f2aaff8e90c5a5d457c1a45819f25edbceb893fc7afa5591e442c0e016a70872"
+        },
+        {
+            "date": 1791439711428,
+            "name": "/Users/abi/workspaces/hustle/support-portal/storage/logs/main/notification-manager/2026-10-08.log",
+            "hash": "85ca78cf390549d42b5b04a6dda087e8d47fc92504fcba94f18357d0c8a1d22e"
         }
     ],
     "hashType": "sha256"
