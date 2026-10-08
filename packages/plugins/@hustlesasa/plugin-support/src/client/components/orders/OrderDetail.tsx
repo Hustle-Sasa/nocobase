@@ -85,7 +85,7 @@ function OrderDetail({ selectedItem }: { selectedItem?: DataItem }) {
       label: 'Payments',
       children: <OrderPayments order={data.order_reference} status={data?.status} mutate={refresh} />,
     },
-    ...(isDeveloper && data?.status === 'DELIVERED'
+    ...(isDeveloper && environment === 'staging' && data?.status === 'DELIVERED'
       ? [
           {
             key: 'shared-tickets',

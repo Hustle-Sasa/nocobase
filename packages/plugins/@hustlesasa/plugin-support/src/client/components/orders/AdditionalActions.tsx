@@ -48,7 +48,7 @@ function AdditionalActions({ selectedItem, onUpdated }: AdditionalActionsProps) 
   const isPaystack = selectedItem?.payment_method_id === 'KE_BUYER_PAYSTACK_MOMO_PAYMENT';
   const canShowVerifyPayment = isPaystack && selectedItem?.status === 'PAYMENT_PROCESSING';
   const canRegenerateTicket = ['PAYMENT_COMPLETED', 'DELIVERED'].includes(selectedItem?.status ?? '');
-  const canChangePhoneNumber = selectedItem?.status === 'DELIVERED';
+  const canChangePhoneNumber = environment === 'staging' && selectedItem?.status === 'DELIVERED';
   const checkoutUrl = `https://purchase.hustlesasa.shop/checkout/${selectedItem?.order_reference ?? ''}`;
 
   /**

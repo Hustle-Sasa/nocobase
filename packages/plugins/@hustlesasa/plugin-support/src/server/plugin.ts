@@ -572,6 +572,10 @@ export class PluginSupportServer extends Plugin {
         },
 
         changePhoneNumber: async (ctx, next) => {
+          if (ctx.action?.params?.env !== 'staging') {
+            ctx.throw(403, 'This action is only available in staging');
+          }
+
           const { cfg, creds } = resolveEnv(ctx.action?.params?.env ?? 'production');
 
           if (!(await hasTechnicalRole(ctx))) {
@@ -640,6 +644,10 @@ export class PluginSupportServer extends Plugin {
         },
 
         listSharedTickets: async (ctx: any, next) => {
+          if (ctx.action?.params?.env !== 'staging') {
+            ctx.throw(403, 'This action is only available in staging');
+          }
+
           const { cfg, creds } = resolveEnv(ctx.action?.params?.env ?? 'production');
 
           if (!(await hasTechnicalRole(ctx))) {
@@ -680,6 +688,10 @@ export class PluginSupportServer extends Plugin {
         },
 
         cancelSharedTicket: async (ctx: any, next) => {
+          if (ctx.action?.params?.env !== 'staging') {
+            ctx.throw(403, 'This action is only available in staging');
+          }
+
           const { cfg, creds } = resolveEnv(ctx.action?.params?.env ?? 'production');
 
           if (!(await hasTechnicalRole(ctx))) {
